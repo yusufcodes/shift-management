@@ -1,26 +1,64 @@
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import Landing from './components/Landing';
+import CssBaseline from '@material-ui/core/CssBaseline';
+import { Container, createMuiTheme, createStyles, makeStyles, Theme, ThemeProvider } from '@material-ui/core';
+import Drawer from './components/Drawer';
 
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
-}
+const useStyles = makeStyles((theme: Theme) =>
+   createStyles({
+      root: {
+         display: 'flex',
+      },
+      toolbar: theme.mixins.toolbar,
+      content: {
+         flexGrow: 1,
+         padding: theme.spacing(3),
+      },
+   }),
+);
+
+const App: React.FC = () => {
+   const classes = useStyles();
+   const theme = createMuiTheme({
+      palette: {
+         primary: {
+            light: '#5878a6',
+            main: '#274c77',
+            dark: '#00254b',
+            contrastText: '#ffffff',
+         },
+         secondary: {
+            light: '#91c7ec',
+            main: '#6096ba',
+            dark: '#2d688a',
+            contrastText: '#000000',
+         },
+      },
+      overrides: {
+         MuiCssBaseline: {
+            '@global': {
+               html: {
+                  WebkitFontSmoothing: 'auto',
+               },
+            },
+         },
+      },
+   });
+
+   return (
+      <ThemeProvider theme={theme}>
+         <CssBaseline />
+         <Drawer />
+         <div className={classes.root}>
+            <main className={classes.content}>
+               <div className={classes.toolbar} />
+               <Container maxWidth="sm">
+                  <Landing />
+               </Container>
+            </main>
+         </div>
+      </ThemeProvider>
+   );
+};
 
 export default App;
