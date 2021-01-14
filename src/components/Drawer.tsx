@@ -15,6 +15,9 @@ import MenuIcon from '@material-ui/icons/Menu';
 import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles, useTheme, Theme, createStyles } from '@material-ui/core/styles';
+import { BrowserRouter as Router, Switch, Route, Link } from 'react-router-dom';
+import Landing from './Landing';
+import ShiftDashboard from './ShiftDashboard/ShiftDashboard';
 
 const drawerWidth = 240;
 
@@ -67,9 +70,17 @@ export default function ResponsiveDrawer() {
          <div className={classes.toolbar} />
          <Divider />
          <List>
-            {['Home', 'Login', 'Dashboard - View Shifts', 'Dashboard - Manage Shifts', 'Account'].map((text) => (
-               <ListItem button key={text}>
-                  <ListItemText primary={text} />
+            {[
+               { label: 'Home', link: '/' },
+               { label: 'Login', link: '/login' },
+               { label: 'Dashboard - View Shifts', link: '/shifts' },
+               { label: 'Dashboard - Manage Shifts', link: '/manage' },
+               { label: 'Account', link: '/account' },
+            ].map((page) => (
+               <ListItem button key={page.label}>
+                  <Link to={page.link}>
+                     <ListItemText primary={page.label} />
+                  </Link>
                </ListItem>
             ))}
          </List>
