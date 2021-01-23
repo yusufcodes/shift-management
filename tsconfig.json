@@ -21,7 +21,7 @@
     "sourceMap": true,
     "declaration": true,
     "noUnusedLocals": false,
-    "noUnusedParameters": true,
+    "noUnusedParameters": false,
     "incremental": true,
     "noFallthroughCasesInSwitch": true
   },
