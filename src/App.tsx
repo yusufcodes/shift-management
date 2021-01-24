@@ -55,7 +55,7 @@ const App: React.FC = () => {
             <div className={classes.root}>
                <main className={classes.content}>
                   <div className={classes.toolbar} />
-                  <Container maxWidth="sm">
+                  <Container>
                      <Route path="/shifts">
                         <ShiftDashboard />
                      </Route>

@@ -88,7 +88,7 @@ export default function ResponsiveDrawer() {
    );
 
    return (
-      <React.Fragment>
+      <div className={classes.root}>
          <CssBaseline />
          <AppBar position="fixed" className={classes.appBar}>
             <Toolbar>
@@ -106,7 +106,7 @@ export default function ResponsiveDrawer() {
                </Typography>
             </Toolbar>
          </AppBar>
-         <nav className={classes.drawer} aria-label="mailbox folders">
+         <nav className={classes.drawer} aria-label="website navigation">
             {/* The implementation can be swapped with js to avoid SEO duplication of links. */}
             <Hidden smUp implementation="css">
                <Drawer
@@ -136,6 +136,6 @@ export default function ResponsiveDrawer() {
                </Drawer>
             </Hidden>
          </nav>
-      </React.Fragment>
+      </div>
    );
 }
