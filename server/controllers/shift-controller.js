@@ -1,5 +1,5 @@
 const HttpError = require("../models/http-error");
-
+const { v4: uuidv4 } = require("uuid");
 const SHIFTS = [
   {
     id: "1",
@@ -31,5 +31,20 @@ const getShiftByUserId = ({ params }, res, next) => {
   // place: place
 };
 
+const createShift = (req, res, next) => {
+  const { date, time, employeeId } = req.body;
+  const createdShift = {
+    id: uuidv4(),
+    date,
+    time,
+    employeeId,
+  };
+
+  SHIFTS.push(createdShift);
+
+  res.status(201).json({ shift: createdShift });
+};
+
 exports.getShiftByUserId = getShiftByUserId;
 exports.getShiftById = getShiftById;
+exports.createShift = createShift;

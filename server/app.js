@@ -5,8 +5,12 @@ const userRouter = require("./routes/user-routes");
 
 const app = express();
 
+app.use(bodyParser.json()); // Get JSON from any data from body of a request
+// Auto calls next to move to the next middleware
+
 // only forward requests to shiftRouter if req. url starts with /api/shifts/...
 app.use("/api/shift", shiftRouter); // Listen out for routes from shiftRouter
+
 app.use("/api/user", userRouter); // Listen out for routes from shiftRouter
 
 // Error Handler
