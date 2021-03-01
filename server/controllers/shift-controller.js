@@ -1,6 +1,6 @@
 const HttpError = require("../models/http-error");
 const { v4: uuidv4 } = require("uuid");
-const SHIFTS = [
+let SHIFTS = [
   {
     id: "1",
     employeeId: "1",
@@ -45,6 +45,33 @@ const createShift = (req, res, next) => {
   res.status(201).json({ shift: createdShift });
 };
 
+const updateShift = ({ body, params }, res, next) => {
+  const { date, time } = body;
+  const shiftId = params.sid;
+
+  // Create a copy of the shift, so that original data is not directly manipulated
+  // Spread operator used to create the copy
+  const updatedShift = { ...SHIFTS.find((s) => s.id === shiftId) };
+  const shiftIndex = SHIFTS.findIndex((s) => s.id === shiftId);
+
+  updatedShift.date = date;
+  updatedShift.time = time;
+
+  SHIFTS[shiftIndex] = updatedShift;
+
+  res.status(200).json({ shift: updatedShift });
+};
+
+const deleteShift = (req, res, next) => {
+  const shiftId = req.params.sid;
+
+  // Filter out the shift to be deleted from the array
+  SHIFTS = SHIFTS.filter((p) => p.id !== shiftId);
+  res.status(200).json({ message: `Deleted place with ID ${shiftId}` });
+};
+
 exports.getShiftByUserId = getShiftByUserId;
 exports.getShiftById = getShiftById;
 exports.createShift = createShift;
+exports.updateShift = updateShift;
+exports.deleteShift = deleteShift;
