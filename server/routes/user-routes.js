@@ -1,17 +1,10 @@
 const express = require("express");
+const userController = require("../controllers/user-controller");
 
 const router = express.Router(); // Creates a router to handle routing
-const HttpError = require("../models/http-error");
 
-const USERS = [
-  {
-    id: "1",
-    name: "Yusuf Chowdhury",
-    email: "yusuf2106@hotmail.co.uk",
-    image: "-",
-    password: "SomePassword123",
-    role: "Manager",
-  },
-];
+router.get("/", userController.getUsers);
+router.post("/signup", userController.signup);
+router.post("/login", userController.login);
 
 module.exports = router;
