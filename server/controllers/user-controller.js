@@ -11,10 +11,12 @@ const USERS = [
   },
 ];
 
+// GET: Return all users
 const getUsers = (req, res, next) => {
   res.json({ users: USERS });
 };
 
+// POST: Add a new user to the database
 const signup = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -40,6 +42,7 @@ const signup = (req, res, next) => {
   res.json(201).json({ user: newUser });
 };
 
+// POST: Use login details to sign user into account
 const login = (req, res, next) => {
   const { email, password } = req.body;
 

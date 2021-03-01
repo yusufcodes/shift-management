@@ -3,13 +3,14 @@ const { check } = require("express-validator");
 
 const shiftController = require("../controllers/shift-controller");
 
-const router = express.Router(); // Creates a router to handle routing
+const router = express.Router();
 
 router.get("/:sid", shiftController.getShiftById);
 
 router.get("/user/:uid", shiftController.getShiftsByUserId);
 
-// Extra middleware: check
+/* Note: Can have multiple middlewares such has here, we use express validator to perform
+checks before proceeding to running the controller */
 router.post(
   "/",
   [check("date").not().isEmpty(), check("time").not().isEmpty()],

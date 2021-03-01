@@ -1,24 +1,25 @@
 const express = require("express");
+const app = express();
 const bodyParser = require("body-parser");
+const HttpError = require("./models/http-error");
+
 const shiftRouter = require("./routes/shift-routes");
 const userRouter = require("./routes/user-routes");
-const HttpError = require("./models/http-error");
-const app = express();
 
-app.use(bodyParser.json()); // Get JSON from any data from body of a request
-// Auto calls next to move to the next middleware
+/* Retrieve JSON form of the body of any request, then automatically move onto
+the next middleware */
+app.use(bodyParser.json());
 
-// only forward requests to shiftRouter if req. url starts with /api/shifts/...
-app.use("/api/shift", shiftRouter); // Listen out for routes from shiftRouter
-app.use("/api/user", userRouter); // Listen out for routes from shiftRouter
+// Listen out for defined routes
+app.use("/api/shift", shiftRouter);
+app.use("/api/user", userRouter);
 
-app.use((req, res, next) => {
-  const error = new HttpError("Could not find this route.", 404);
-  throw error;
+// If a request lands here, the route could not be found - handled here
+app.use(() => {
+  throw new HttpError("Could not find this route.", 404);
 });
 
-// Error Handler
-// 4 parameters = error handler, only requests with errors attached to it will run
+// Error Handler Middlware: This has 4 parameters, so will only run if a request is returned with an error.
 app.use((error, req, res, next) => {
   if (res.headerSent) {
     // cannot send more headers if true
