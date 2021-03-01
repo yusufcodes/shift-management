@@ -27,7 +27,7 @@ Example: MySQL
 
 - Account created on Mongo and Cluster created in MongoDB Atlas
 
-### Adding MongoDB
+### Adding MongoDB & performing requests ton the database
 
 Note: Access password from .env file
 
@@ -68,10 +68,6 @@ const createProduct = async (req, res, next) => {
 }
 ```
 
-### Code Examples - working with a MongoDB Cluster
+### Using Mongoose
 
-These are typical examples that could be used in the Controller
-
-```js
-
-```
+Mongoose: Third party library which makes the interaction with the MongoDB database more easier. This is also helpful for creating structured data.
