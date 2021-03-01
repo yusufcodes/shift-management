@@ -1,5 +1,7 @@
 const HttpError = require("../models/http-error");
 const { v4: uuidv4 } = require("uuid");
+const { validationResult } = require("express-validator");
+
 let SHIFTS = [
   {
     id: "1",
@@ -46,6 +48,11 @@ const getShiftsByUserId = ({ params }, res, next) => {
 };
 
 const createShift = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new HttpError("Invalid inputs, please check your data", 422);
+  }
+
   const { date, time, employeeId } = req.body;
   const createdShift = {
     id: uuidv4(),
@@ -60,6 +67,12 @@ const createShift = (req, res, next) => {
 };
 
 const updateShift = ({ body, params }, res, next) => {
+  // TODO: What if we only want to update one single field ?
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    throw new HttpError("Invalid inputs, please check your data", 422);
+  }
+
   const { date, time } = body;
   const shiftId = params.sid;
 
@@ -78,6 +91,10 @@ const updateShift = ({ body, params }, res, next) => {
 
 const deleteShift = (req, res, next) => {
   const shiftId = req.params.sid;
+
+  if (!SHIFTS.find((s) => s.id !== shiftId)) {
+    throw new HttpError("Could not find a shift with this ID", 404);
+  }
 
   // Filter out the shift to be deleted from the array
   SHIFTS = SHIFTS.filter((p) => p.id !== shiftId);
