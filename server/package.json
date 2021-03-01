@@ -21,6 +21,7 @@
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
     "express-validator": "^6.10.0",
+    "mongodb": "^3.6.4",
     "nodemon": "^2.0.7",
     "uuid": "^8.3.2"
   }
