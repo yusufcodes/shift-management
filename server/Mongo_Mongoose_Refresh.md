@@ -71,3 +71,52 @@ const createProduct = async (req, res, next) => {
 ### Using Mongoose
 
 Mongoose: Third party library which makes the interaction with the MongoDB database more easier. This is also helpful for creating structured data.
+
+#### Models and Schemas - definition
+
+Models can be used to map your app's data to the backend, so you only accept data of a specific structure. 
+
+**Creating Schemas in Mongoose**
+```js
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+  name: String,
+  // `lastActiveAt` is a date
+  lastActiveAt: Date
+});
+const User = mongoose.model('User', userSchema);
+```
+
+#### Models and Schemas - using them
+
+This bit of code shows how you can add a new Document to the database following a schema that has been created. Also includes how to connect to the database in Mongoose (instead of the regular MongoDB driver).
+
+```js
+const mongoose = require('mongoose');
+
+// Import the model
+const Product = require('./models/product');
+
+// Mongoose handles connecting and disconnecting to the database for us - returns a Promise
+mongoose.connect('url-here'
+).then(() => console.log('Connected to db')
+).catch(() => console.log('Connection failed'));
+
+const createProduct = async (req, res, next) => {
+   const createdProduct = new Product({
+      name: req.body.name,
+      price: req.body.price,
+   });
+   const result = await createdProduct.save(); 
+
+   res.json(result);
+};
+
+```
+
+### ObjectID
+
+ID is automatically added to documents when added to the database. (Either MongoDB and Mongoose). It is of type **OjectId**. 
+
+Mongoose makes it easy to ge the string version by referring to the ID as **.id** instead of **._id**
