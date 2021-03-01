@@ -7,6 +7,18 @@ let SHIFTS = [
     date: "Tuesday 8th February 2021",
     time: "16:00 - 22:00",
   },
+  {
+    id: "2",
+    employeeId: "2",
+    date: "Monday 8th February 2021",
+    time: "16:00 - 22:00",
+  },
+  {
+    id: "3",
+    employeeId: "2",
+    date: "Monday 8th February 2021",
+    time: "16:00 - 22:00",
+  },
 ];
 
 const getShiftById = ({ params }, res, next) => {
@@ -20,14 +32,16 @@ const getShiftById = ({ params }, res, next) => {
   // place: place
 };
 
-const getShiftByUserId = ({ params }, res, next) => {
+const getShiftsByUserId = ({ params }, res, next) => {
   const userId = params.uid;
-  const user = SHIFTS.find((s) => s.employeeId === userId);
-  if (!user) {
-    throw new HttpError("Could not find a shift for the provided user ID", 404);
+
+  // Return all shifts where the ID matches: 0 or more shifts
+  const userShifts = SHIFTS.filter((s) => s.employeeId === userId);
+  if (!userShifts || userShifts.length === 0) {
+    throw new HttpError("Could not find shifts for the provided user ID", 404);
   }
   console.log("GET request in shift for a user");
-  res.json({ user }); // Any data type that can be converted to JSON, returns it upon request
+  res.json({ userShifts }); // Any data type that can be converted to JSON, returns it upon request
   // place: place
 };
 
@@ -70,7 +84,7 @@ const deleteShift = (req, res, next) => {
   res.status(200).json({ message: `Deleted place with ID ${shiftId}` });
 };
 
-exports.getShiftByUserId = getShiftByUserId;
+exports.getShiftsByUserId = getShiftsByUserId;
 exports.getShiftById = getShiftById;
 exports.createShift = createShift;
 exports.updateShift = updateShift;
