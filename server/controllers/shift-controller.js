@@ -1,6 +1,7 @@
 const HttpError = require("../models/http-error");
 const { v4: uuidv4 } = require("uuid");
 const { validationResult } = require("express-validator");
+const Shift = require("../models/shift");
 
 let SHIFTS = [
   {
@@ -49,21 +50,25 @@ const getShiftsByUserId = ({ params }, res, next) => {
 };
 
 // POST: Add a new 'Shift' to the database
-const createShift = (req, res, next) => {
+const createShift = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new HttpError("Invalid inputs, please check your data", 422);
   }
 
-  const { date, time, employeeId } = req.body;
-  const createdShift = {
-    id: uuidv4(),
-    date,
-    time,
-    employeeId,
-  };
+  const { datetime, employeeId } = req.body;
 
-  SHIFTS.push(createdShift);
+  // To Do: Once I create Date selection on front end, pass this in here - currently just uses current date.
+  const createdShift = new Shift({
+    datetime: new Date(),
+    employeeId,
+  });
+  try {
+    await createdShift.save();
+  } catch (err) {
+    const error = new HttpError("Creating shift failed, please try again", 500);
+    return next(error); // Stop code execution
+  }
 
   res.status(201).json({ shift: createdShift });
 };

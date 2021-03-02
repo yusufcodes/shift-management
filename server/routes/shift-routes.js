@@ -9,14 +9,10 @@ router.get("/:sid", shiftController.getShiftById);
 
 router.get("/user/:uid", shiftController.getShiftsByUserId);
 
+router.post("/", shiftController.createShift);
+
 /* Note: Can have multiple middlewares such has here, we use express validator to perform
 checks before proceeding to running the controller */
-router.post(
-  "/",
-  [check("date").not().isEmpty(), check("time").not().isEmpty()],
-  shiftController.createShift
-);
-
 router.patch(
   "/:sid",
   [check("date").not().isEmpty(), check("time").not().isEmpty()],
