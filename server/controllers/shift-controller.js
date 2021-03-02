@@ -100,7 +100,6 @@ const createShift = async (req, res, next) => {
     return next(error); // Stop code execution
   }
 
-  // To Do: Setting header not working here but signup is working
   res.status(201).json({ shift: createdShift });
 };
 

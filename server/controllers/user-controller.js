@@ -64,12 +64,21 @@ const signup = async (req, res, next) => {
 };
 
 // POST: Use login details to sign user into account
-const login = (req, res, next) => {
+const login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  const identifiedUser = USERS.find((u) => u.email === email);
-  if (!identifiedUser || identifiedUser.password !== password) {
-    throw new HttpError("User/pass combination not found", 401);
+  let existing;
+
+  try {
+    existing = await User.findOne({ email: email });
+  } catch (err) {
+    const error = new HttpError("Logging in failed, try again ", 500);
+    return next(error);
+  }
+
+  if (!existing || existing.password !== password) {
+    const error = new HttpError("Invalid credentials - could not login", 401);
+    return next(error);
   }
 
   res.json({ message: "Logged in" });
