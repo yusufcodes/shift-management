@@ -1,6 +1,7 @@
 const { v4: uuidv4 } = require("uuid");
 const HttpError = require("../models/http-error");
 const { validationResult } = require("express-validator");
+const User = require("../models/user");
 
 const USERS = [
   {
@@ -17,29 +18,49 @@ const getUsers = (req, res, next) => {
 };
 
 // POST: Add a new user to the database
-const signup = (req, res, next) => {
+const signup = async (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError("Invalid inputs, please check your data", 422);
+    const error = new HttpError("Invalid inputs, please check your data", 422);
+    return next(error);
   }
 
-  const { name, email, password } = req.body;
+  const { name, email, password, shifts } = req.body;
 
-  const userFound = USERS.find((u) => u.email === email);
-  if (userFound) {
-    throw new HttpError("Could not create user, email already in use!", 422);
+  let existing;
+
+  try {
+    existing = await User.findOne({ email: email });
+  } catch (err) {
+    const error = new HttpError("Sign up failed, try again ", 500);
+    return next(error);
   }
 
-  const newUser = {
-    id: uuidv4(),
+  if (existing) {
+    const error = new HttpError(
+      "User exists already. please login instead",
+      422
+    );
+    return next(error);
+  }
+
+  // To Do: Store password securely - encrypted
+  const newUser = new User({
     name,
     email,
     password,
-  };
+    shifts,
+  });
 
-  USERS.push(newUser);
+  try {
+    await newUser.save();
+  } catch (err) {
+    const error = new HttpError("Sign up failed, please try again", 500);
+    return next(error); // Stop code execution
+  }
 
-  res.json(201).json({ user: newUser });
+  // To Do: Remove password from response during encryption / security
+  res.json(201).json({ user: newUser.toObject({ getters: true }) });
 };
 
 // POST: Use login details to sign user into account
