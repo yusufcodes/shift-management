@@ -1,5 +1,6 @@
 const HttpError = require("../models/http-error");
 const { v4: uuidv4 } = require("uuid");
+const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
 const Shift = require("../models/shift");
 
@@ -103,24 +104,39 @@ const createShift = async (req, res, next) => {
 };
 
 // PATCH: Update fields of any Shift
-const updateShift = ({ body, params }, res, next) => {
+const updateShift = async (req, res, next) => {
   // TODO: What if we only want to update one single field ?
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new HttpError("Invalid inputs, please check your data", 422);
   }
 
-  const { date, time } = body;
-  const shiftId = params.sid;
+  const shiftId = mongoose.Types.ObjectId(req.params.sid);
+  console.log(shiftId);
+  const { datetime } = req.body;
 
-  // Use of Spread to create new copy of all the shifts
-  const updatedShift = { ...SHIFTS.find((s) => s.id === shiftId) };
-  const shiftIndex = SHIFTS.findIndex((s) => s.id === shiftId);
+  let updatedShift;
 
-  updatedShift.date = date;
-  updatedShift.time = time;
+  try {
+    // Each param: Item to update, fields to update, return the newly updated data
+    updatedShift = await Shift.findOneAndUpdate(
+      { _id: shiftId },
+      { datetime: datetime },
+      { new: true }
+    );
+    console.log(updatedShift);
+  } catch (err) {
+    const error = new HttpError("Database: Could not update shift", 500);
+    return next(error); // Stop code execution
+  }
 
-  SHIFTS[shiftIndex] = updatedShift;
+  if (!updatedShift || !updatedShift.length < 1) {
+    const error = new HttpError(
+      "No shift matching that ID was found, please try again.",
+      404
+    );
+    return next(error);
+  }
 
   res.status(200).json({ shift: updatedShift });
 };

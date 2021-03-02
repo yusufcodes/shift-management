@@ -15,7 +15,7 @@ router.post("/", shiftController.createShift);
 checks before proceeding to running the controller */
 router.patch(
   "/:sid",
-  [check("date").not().isEmpty(), check("time").not().isEmpty()],
+  check("datetime").not().isEmpty(),
   shiftController.updateShift
 );
 
