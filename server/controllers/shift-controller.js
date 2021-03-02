@@ -142,15 +142,30 @@ const updateShift = async (req, res, next) => {
 };
 
 // DELETE: Remove a shift from the database
-const deleteShift = (req, res, next) => {
-  const shiftId = req.params.sid;
+const deleteShift = async (req, res, next) => {
+  const shiftId = mongoose.Types.ObjectId(req.params.sid);
+  let deleteShift;
 
-  if (!SHIFTS.find((s) => s.id !== shiftId)) {
-    throw new HttpError("Could not find a shift with this ID", 404);
+  try {
+    deleteShift = await Shift.deleteOne({ _id: shiftId });
+  } catch (err) {
+    const error = new HttpError("Database: Could not delete shift", 500);
+    return next(error);
   }
 
-  // Filter out the shift to be deleted from the array
-  SHIFTS = SHIFTS.filter((p) => p.id !== shiftId);
+  if (deleteShift.ok !== 1) {
+    const error = new HttpError("Database: Could not delete shift", 500);
+    return next(error);
+  }
+
+  if (deleteShift.deletedCount !== 1) {
+    const error = new HttpError(
+      "Shift with the given ID could not be found.",
+      404
+    );
+    return next(error);
+  }
+
   res.status(200).json({ message: `Deleted place with ID ${shiftId}` });
 };
 
