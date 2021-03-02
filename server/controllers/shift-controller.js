@@ -25,28 +25,57 @@ let SHIFTS = [
 ];
 
 // GET: Return a shift based on its ID
-const getShiftById = ({ params }, res, next) => {
+const getShiftById = async ({ params }, res, next) => {
   const shiftId = params.sid;
-  const shift = SHIFTS.find((s) => s.id === shiftId);
-  if (!shift) {
-    throw new HttpError("Could not find a shift for the provided ID", 404);
+
+  let shift;
+
+  try {
+    shift = await Shift.findById(shiftId);
+  } catch (err) {
+    const error = new HttpError(
+      "Database: Issue with getting shift by this ID",
+      500
+    );
+    return next(error); // Stop code execution
   }
-  console.log("GET request in shifts");
-  res.json({ shift }); // Any data type that can be converted to JSON, returns it upon request
-  // place: place
+
+  if (!shift) {
+    const error = new HttpError("Couldnt find shift by ID", 500);
+    return next(error);
+  }
+
+  res.json({ shift: shift.toObject({ getters: true }) });
 };
 
 // GET: Return 0 or more shifts associated with Employee
-const getShiftsByUserId = ({ params }, res, next) => {
-  const userId = params.uid;
+const getShiftsByUserId = async ({ params }, res, next) => {
+  const employeeId = params.uid;
 
-  // Return all shifts where the ID matches: 0 or more shifts
-  const userShifts = SHIFTS.filter((s) => s.employeeId === userId);
-  if (!userShifts || userShifts.length === 0) {
-    throw new HttpError("Could not find shifts for the provided user ID", 404);
+  let userShifts;
+
+  try {
+    userShifts = await Shift.find({ employeeId: employeeId });
+  } catch (err) {
+    const error = new HttpError(
+      "Database: Issue with getting shifts for this user",
+      500
+    );
+    return next(error);
   }
-  console.log("GET request in shift for a user");
-  res.json({ userShifts });
+
+  if (!userShifts || userShifts.length === 0) {
+    const error = new HttpError(
+      "Could not find shifts for the provided user ID",
+      404
+    );
+    return next(error);
+  }
+
+  // getters: true removes underscore from id and adds it to the returned data
+  res.json({
+    userShifts: userShifts.map((shift) => shift.toObject({ getters: true })),
+  });
 };
 
 // POST: Add a new 'Shift' to the database
