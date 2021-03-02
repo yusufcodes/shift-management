@@ -1,10 +1,15 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = express();
+const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 const HttpError = require("./models/http-error");
 
 const shiftRouter = require("./routes/shift-routes");
 const userRouter = require("./routes/user-routes");
+
+console.log(process.env.MONGO_PASSWORD);
 
 /* Retrieve JSON form of the body of any request, then automatically move onto
 the next middleware */
@@ -31,4 +36,11 @@ app.use((error, req, res, next) => {
     .json({ message: error.message || "An unknown error has occurred!" });
 });
 
-app.listen(5000);
+mongoose
+  .connect(
+    `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_CLUSTER}/${process.env.MONGO_DBNAME}?retryWrites=true&w=majority`
+  )
+  .then(() => {
+    app.listen(5000);
+  })
+  .catch((err) => console.log(err));
