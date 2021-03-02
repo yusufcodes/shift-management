@@ -13,8 +13,18 @@ const USERS = [
 ];
 
 // GET: Return all users
-const getUsers = (req, res, next) => {
-  res.json({ users: USERS });
+const getUsers = async (req, res, next) => {
+  let users;
+
+  try {
+    // Return everything except for the password
+    users = await User.find({}, "-password");
+  } catch (err) {
+    const error = new HttpError("Getting users failed, please try again", 500);
+    return next(error);
+  }
+
+  res.json({ users: users.map((user) => user.toObject({ getters: true })) });
 };
 
 // POST: Add a new user to the database
