@@ -3,14 +3,13 @@ require("dotenv").config();
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-mongoose.set("useCreateIndex", true);
+mongoose.set("useCreateIndex", true); // prevent deprecation warnings from MonogDB driver
+
 const bodyParser = require("body-parser");
 const HttpError = require("./models/http-error");
 
 const shiftRouter = require("./routes/shift-routes");
 const userRouter = require("./routes/user-routes");
-
-console.log(process.env.MONGO_PASSWORD);
 
 /* Retrieve JSON form of the body of any request, then automatically move onto
 the next middleware */
@@ -20,7 +19,7 @@ app.use(bodyParser.json());
 app.use("/api/shift", shiftRouter);
 app.use("/api/user", userRouter);
 
-// If a request lands here, the route could not be found - handled here
+// If a request lands here, the route could not be found - handle error here
 app.use(() => {
   throw new HttpError("Could not find this route.", 404);
 });

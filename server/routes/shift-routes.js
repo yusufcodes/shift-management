@@ -11,7 +11,7 @@ router.get("/user/:uid", shiftController.getShiftsByUserId);
 
 router.post("/", shiftController.createShift);
 
-/* Note: Can have multiple middlewares such has here, we use express validator to perform
+/* Note: Can have multiple middlewares such as here, we use express validator to perform
 checks before proceeding to running the controller */
 router.patch(
   "/:sid",

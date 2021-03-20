@@ -1,29 +1,8 @@
 const HttpError = require("../models/http-error");
-const { v4: uuidv4 } = require("uuid");
 const mongoose = require("mongoose");
 const { validationResult } = require("express-validator");
 const Shift = require("../models/shift");
-
-let SHIFTS = [
-  {
-    id: "1",
-    employeeId: "1",
-    date: "Tuesday 8th February 2021",
-    time: "16:00 - 22:00",
-  },
-  {
-    id: "2",
-    employeeId: "2",
-    date: "Monday 8th February 2021",
-    time: "16:00 - 22:00",
-  },
-  {
-    id: "3",
-    employeeId: "2",
-    date: "Monday 8th February 2021",
-    time: "16:00 - 22:00",
-  },
-];
+const User = require("../models/user");
 
 // GET: Return a shift based on its ID
 const getShiftById = async ({ params }, res, next) => {
@@ -88,16 +67,49 @@ const createShift = async (req, res, next) => {
 
   const { datetime, employeeId } = req.body;
 
-  // To Do: Once I create Date selection on front end, pass this in here - currently just uses current date.
+  // TODO: Once I create Date selection on front end, pass this in here - currently just uses current date.
   const createdShift = new Shift({
     datetime: new Date(),
     employeeId,
   });
+
+  let user;
+
+  // Find the user first before updating their shift
   try {
-    await createdShift.save();
+    user = await User.findById(employeeId);
+  } catch (err) {
+    const error = new HttpError("Creating shift failed", 500);
+    return next(error);
+  }
+  if (!user) {
+    const error = new HttpError("Could not find user with given ID", 404);
+    return next(error);
+  }
+
+  console.log(user);
+  /*
+  - Run multiple operations independently but if one fails, undo all operations.
+    - Sessions: Start a session, initiate the transaction, and once the transaction is successful,
+  only then do we finish the session.
+  - Transactions: Performs multiple operations
+  */
+  // Transactions: session -> initiate transaction -> successful, finish session
+  try {
+    const sess = await mongoose.startSession();
+    sess.startTransaction();
+
+    // 1. Store the created shift
+    await createdShift.save({ session: sess });
+    // 2. Link the created shift to the corresponding user
+    user.shifts.push(createdShift); // Push: Mongoose method, establish link between Shift and User
+    await user.save({ session: sess });
+
+    // Save the data that has just been changed - only saved when this line is executed
+    await sess.commitTransaction();
   } catch (err) {
     const error = new HttpError("Creating shift failed, please try again", 500);
-    return next(error); // Stop code execution
+    return next(error);
   }
 
   res.status(201).json({ shift: createdShift });
@@ -105,14 +117,12 @@ const createShift = async (req, res, next) => {
 
 // PATCH: Update fields of any Shift
 const updateShift = async (req, res, next) => {
-  // TODO: What if we only want to update one single field ?
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new HttpError("Invalid inputs, please check your data", 422);
   }
 
   const shiftId = mongoose.Types.ObjectId(req.params.sid);
-  console.log(shiftId);
   const { datetime } = req.body;
 
   let updatedShift;
@@ -124,7 +134,6 @@ const updateShift = async (req, res, next) => {
       { datetime: datetime },
       { new: true }
     );
-    console.log(updatedShift);
   } catch (err) {
     const error = new HttpError("Database: Could not update shift", 500);
     return next(error); // Stop code execution
@@ -144,29 +153,53 @@ const updateShift = async (req, res, next) => {
 // DELETE: Remove a shift from the database
 const deleteShift = async (req, res, next) => {
   const shiftId = mongoose.Types.ObjectId(req.params.sid);
-  let deleteShift;
+  console.log("Shift ID to be removed: ");
+  console.log(shiftId);
+
+  let shift;
 
   try {
-    deleteShift = await Shift.deleteOne({ _id: shiftId });
+    /* Populate: only works if there is a link between two models (Shift and User in this case)
+     */
+    // Returns the Shift properties along with the User it belongs to.
+    shift = await Shift.findById(shiftId).populate("employeeId");
   } catch (err) {
-    const error = new HttpError("Database: Could not delete shift", 500);
-    return next(error);
-  }
-
-  if (deleteShift.ok !== 1) {
-    const error = new HttpError("Database: Could not delete shift", 500);
-    return next(error);
-  }
-
-  if (deleteShift.deletedCount !== 1) {
     const error = new HttpError(
-      "Shift with the given ID could not be found.",
-      404
+      "Server: Something went wrong, could not find shift.",
+      500
     );
     return next(error);
   }
 
-  res.status(200).json({ message: `Deleted place with ID ${shiftId}` });
+  if (!shift) {
+    const error = new HttpError("Could not find a shift for this ID", 404);
+    return next(error);
+  }
+
+  // Removing the shift + removing it from the associated employeeId
+  try {
+    // Start a new session
+    const sess = await mongoose.startSession();
+    // Start an associated transaction
+    sess.startTransaction();
+
+    // 1. Remove the shift
+    await shift.remove({ session: sess });
+
+    // 2. Remove the shift from the employeeId
+    shift.employeeId.shifts.pull(shift); // ID removed by pull
+
+    // employeeId: full employeeId object linked to the shift we are removing.
+    await shift.employeeId.save({ session: sess });
+
+    // Save the data that has just been changed - only saved when this line is executed
+    await sess.commitTransaction();
+  } catch (err) {
+    const error = new HttpError("Could not delete place", 500);
+    return next(error);
+  }
+
+  res.status(200).json({ message: `Deleted shift with ID ${shiftId}` });
 };
 
 exports.getShiftsByUserId = getShiftsByUserId;

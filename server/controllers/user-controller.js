@@ -1,23 +1,13 @@
-const { v4: uuidv4 } = require("uuid");
 const HttpError = require("../models/http-error");
 const { validationResult } = require("express-validator");
 const User = require("../models/user");
-
-const USERS = [
-  {
-    id: "1",
-    name: "Yusuf Chowdhury",
-    email: "yusuf@gmail.com",
-    password: "pass123",
-  },
-];
 
 // GET: Return all users
 const getUsers = async (req, res, next) => {
   let users;
 
   try {
-    // Return everything except for the password
+    // Return all fields except for the password (security)
     users = await User.find({}, "-password");
   } catch (err) {
     const error = new HttpError("Getting users failed, please try again", 500);
@@ -30,12 +20,13 @@ const getUsers = async (req, res, next) => {
 // POST: Add a new user to the database
 const signup = async (req, res, next) => {
   const errors = validationResult(req);
+  // TODO: Make error message more specific?
   if (!errors.isEmpty()) {
     const error = new HttpError("Invalid inputs, please check your data", 422);
     return next(error);
   }
 
-  const { name, email, password, shifts } = req.body;
+  const { name, email, password } = req.body;
 
   let existing;
 
@@ -54,12 +45,12 @@ const signup = async (req, res, next) => {
     return next(error);
   }
 
-  // To Do: Store password securely - encrypted
+  // TODO: Store password securely - encrypted
   const newUser = new User({
     name,
     email,
     password,
-    shifts,
+    shifts: [],
   });
 
   try {
@@ -70,7 +61,7 @@ const signup = async (req, res, next) => {
   }
 
   // To Do: Remove password from response during encryption / security
-  res.json(201).json({ user: newUser.toObject({ getters: true }) });
+  res.json({ user: newUser.toObject({ getters: true }) });
 };
 
 // POST: Use login details to sign user into account
