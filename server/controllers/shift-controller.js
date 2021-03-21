@@ -69,7 +69,8 @@ const createShift = async (req, res, next) => {
 
   // TODO: Once I create Date selection on front end, pass this in here - currently just uses current date.
   const createdShift = new Shift({
-    datetime: new Date(),
+    starttime: new Date(),
+    endtime: new Date(),
     employeeId,
   });
 
@@ -123,7 +124,7 @@ const updateShift = async (req, res, next) => {
   }
 
   const shiftId = mongoose.Types.ObjectId(req.params.sid);
-  const { datetime } = req.body;
+  const { starttime, endtime } = req.body;
 
   let updatedShift;
 
@@ -131,7 +132,7 @@ const updateShift = async (req, res, next) => {
     // Each param: Item to update, fields to update, return the newly updated data
     updatedShift = await Shift.findOneAndUpdate(
       { _id: shiftId },
-      { datetime: datetime },
+      { starttime: starttime, endtime: endtime },
       { new: true }
     );
   } catch (err) {
