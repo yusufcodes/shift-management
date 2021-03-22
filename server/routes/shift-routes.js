@@ -2,12 +2,16 @@ const express = require("express");
 const { check } = require("express-validator");
 
 const shiftController = require("../controllers/shift-controller");
+const checkAuth = require("../middleware/auth");
 
 const router = express.Router();
 
 router.get("/:sid", shiftController.getShiftById);
 
 router.get("/user/:uid", shiftController.getShiftsByUserId);
+
+// Any request past this point must have a token / be authenticated.
+router.use(checkAuth);
 
 router.post("/", shiftController.createShift);
 

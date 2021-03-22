@@ -15,6 +15,16 @@ const userRouter = require("./routes/user-routes");
 the next middleware */
 app.use(bodyParser.json());
 
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
+  next();
+});
+
 // Listen out for defined routes
 app.use("/api/shift", shiftRouter);
 app.use("/api/user", userRouter);

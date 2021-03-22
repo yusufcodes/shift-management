@@ -1,7 +1,34 @@
+require("dotenv").config();
+
 const HttpError = require("../models/http-error");
 const { validationResult } = require("express-validator");
 const User = require("../models/user");
 const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const generateToken = (userId, name, email, admin) => {
+  let token;
+  // Create a new token
+  try {
+    token = jwt.sign(
+      {
+        userId,
+        name,
+        email,
+        admin,
+      },
+      process.env.SECRET,
+      { expiresIn: "1d" }
+    );
+  } catch (err) {
+    const error = new HttpError(
+      "Token - Sign up / Login failed, please try again",
+      500
+    );
+    return next(error); // Stop code execution
+  }
+  return token;
+};
 
 // GET: Return all users
 const getUsers = async (req, res, next) => {
@@ -27,7 +54,7 @@ const signup = async (req, res, next) => {
     return next(error);
   }
 
-  const { name, email, password } = req.body;
+  const { name, email, password, admin } = req.body;
 
   let existing;
 
@@ -61,19 +88,26 @@ const signup = async (req, res, next) => {
   const newUser = new User({
     name,
     email,
-    hashedPassword,
+    password: hashedPassword,
+    admin,
     shifts: [],
   });
+
+  console.log(newUser);
 
   try {
     await newUser.save();
   } catch (err) {
+    console.log(err);
     const error = new HttpError("Sign up failed, please try again", 500);
     return next(error); // Stop code execution
   }
 
-  // To Do: Remove password from response during encryption / security
-  res.json({ user: newUser.toObject({ getters: true }) });
+  let token;
+  // Create a new token
+  token = generateToken(newUser.id, newUser.name, newUser.email, newUser.admin);
+
+  res.status(201).json({ userId: newUser.id, email: newUser.email, token });
 };
 
 // POST: Use login details to sign user into account
@@ -111,7 +145,17 @@ const login = async (req, res, next) => {
     return next(error);
   }
 
-  res.json({ message: "Logged in" });
+  let token;
+
+  // Create a new token
+  token = generateToken(
+    existing.id,
+    existing.name,
+    existing.email,
+    existing.admin
+  );
+
+  res.status(201).json({ userId: existing.id, email: existing.email, token });
 };
 
 exports.getUsers = getUsers;
