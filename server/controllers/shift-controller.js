@@ -58,6 +58,47 @@ const getShiftsByUserId = async ({ params }, res, next) => {
   });
 };
 
+const getCurrentShifts = async (req, res, next) => {
+  console.log("Running getCurrentShifts...");
+  // TODO: check this actually returns what I expect
+  // console.log(req);
+
+  const employeeId = req.userData.userId;
+
+  if (!employeeId) {
+    const error = new HttpError(
+      "No user ID retrieved - make sure you are logged in!",
+      500
+    );
+    return next(error);
+  }
+
+  let userShifts;
+
+  try {
+    userShifts = await Shift.find({ employeeId: employeeId });
+  } catch (err) {
+    const error = new HttpError(
+      "Database: Issue with getting shifts for this user",
+      500
+    );
+    return next(error);
+  }
+
+  if (!userShifts || userShifts.length === 0) {
+    const error = new HttpError(
+      "Could not find shifts for the provided user ID",
+      404
+    );
+    return next(error);
+  }
+
+  // getters: true removes underscore from id and adds it to the returned data
+  res.json({
+    userShifts: userShifts.map((shift) => shift.toObject({ getters: true })),
+  });
+};
+
 // POST: Add a new 'Shift' to the database
 const createShift = async (req, res, next) => {
   const errors = validationResult(req);
@@ -205,6 +246,7 @@ const deleteShift = async (req, res, next) => {
 
 exports.getShiftsByUserId = getShiftsByUserId;
 exports.getShiftById = getShiftById;
+exports.getCurrentShifts = getCurrentShifts;
 exports.createShift = createShift;
 exports.updateShift = updateShift;
 exports.deleteShift = deleteShift;
