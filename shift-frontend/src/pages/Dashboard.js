@@ -1,13 +1,29 @@
 import React from "react";
 import authContext from "../context/authContext";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  Link,
+  Redirect,
+  useRouteMatch,
+  useParams,
+} from "react-router-dom";
+import View from "./View";
 
 export default function Dashboard() {
   const auth = React.useContext(authContext);
-  console.log(auth.token);
-  console.log(auth.isLoggedIn);
+
   return (
-    <div>
-      <h1>{`Hello dashboard`}</h1>
-    </div>
+    <Router>
+      <Switch>
+        <Route exact path="/dashboard">
+          <Redirect to="/dashboard/view" />
+        </Route>
+        <Route path="/dashboard/view">
+          <View />
+        </Route>
+      </Switch>
+    </Router>
   );
 }

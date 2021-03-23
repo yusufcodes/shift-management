@@ -3,21 +3,13 @@ const axios = require("axios");
 let instance = axios.create({
   baseURL: " http://localhost:5000",
   timeout: 1000,
-  // Add authentication header here
   // headers: {'X-Custom-Header': 'foobar'}
 });
 
-const init = (token) => {
-  instance = axios.create({
-    baseURL: " http://localhost:5000",
-    timeout: 1000,
-    headers: { "X-Authorization": token },
-  });
-};
-
 export const getAllUsers = async () => {
+  let response;
   try {
-    const response = await instance({
+    response = await instance({
       method: "get",
       url: "/api/user",
     });
@@ -25,11 +17,31 @@ export const getAllUsers = async () => {
   } catch (error) {
     console.error(error);
   }
+  return response;
+};
+
+export const getCurrentShifts = async (token) => {
+  let response;
+  try {
+    response = await instance({
+      method: "get",
+      url: "/api/shift/current",
+      headers: {
+        "X-Authorization": token,
+      },
+    });
+    console.log(response);
+  } catch (error) {
+    console.error(error);
+  }
+  return response;
 };
 
 export const login = async (email, password) => {
+  let response;
+
   try {
-    const response = await instance({
+    response = await instance({
       method: "post",
       url: "/api/user/login",
       data: {
@@ -37,11 +49,10 @@ export const login = async (email, password) => {
         password,
       },
     });
-    console.log(response);
-    return response;
   } catch (error) {
     console.error(error.response.data.message);
   }
+  return response;
 };
 
 /* TEMPLATE */
