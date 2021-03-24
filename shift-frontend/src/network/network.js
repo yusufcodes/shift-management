@@ -6,7 +6,24 @@ let instance = axios.create({
   // headers: {'X-Custom-Header': 'foobar'}
 });
 
-export const getAllUsers = async () => {
+export const getCurrentShifts = async (token) => {
+  let response;
+  try {
+    response = await instance({
+      method: "get",
+      url: "/api/shift/current",
+      headers: {
+        "X-Authorization": token,
+      },
+    });
+    console.log(response);
+  } catch (error) {
+    console.error(error);
+  }
+  return response;
+};
+
+export const getUsers = async () => {
   let response;
   try {
     response = await instance({
@@ -20,12 +37,12 @@ export const getAllUsers = async () => {
   return response;
 };
 
-export const getCurrentShifts = async (token) => {
+export const getShiftsByUserId = async (token, userId) => {
   let response;
   try {
     response = await instance({
       method: "get",
-      url: "/api/shift/current",
+      url: `/api/shift/user/${userId}`,
       headers: {
         "X-Authorization": token,
       },

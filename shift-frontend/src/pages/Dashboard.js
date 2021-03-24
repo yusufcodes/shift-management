@@ -10,6 +10,7 @@ import {
   useParams,
 } from "react-router-dom";
 import View from "./View";
+import Manage from "./Manage";
 
 export default function Dashboard() {
   const auth = React.useContext(authContext);
@@ -18,10 +19,13 @@ export default function Dashboard() {
     <Router>
       <Switch>
         <Route exact path="/dashboard">
-          <Redirect to="/dashboard/view" />
+          <Redirect to="/dashboard/manage" />
         </Route>
         <Route path="/dashboard/view">
           <View />
+        </Route>
+        <Route path="/dashboard/manage">
+          <Manage />
         </Route>
       </Switch>
     </Router>
