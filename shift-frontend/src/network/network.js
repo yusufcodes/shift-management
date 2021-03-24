@@ -18,7 +18,7 @@ export const getCurrentShifts = async (token) => {
     });
     console.log(response);
   } catch (error) {
-    console.error(error);
+    console.error(error.response.data.message);
   }
   return response;
 };
@@ -32,7 +32,7 @@ export const getUsers = async () => {
     });
     console.log(response);
   } catch (error) {
-    console.error(error);
+    console.error(error.response.data.message);
   }
   return response;
 };
@@ -49,7 +49,24 @@ export const getShiftsByUserId = async (token, userId) => {
     });
     console.log(response);
   } catch (error) {
-    console.error(error);
+    console.error(error.response.data.message);
+  }
+  return response;
+};
+
+export const deleteShift = async (token, userId) => {
+  let response;
+  try {
+    response = await instance({
+      method: "delete",
+      url: `/api/shift/${userId}`,
+      headers: {
+        "X-Authorization": token,
+      },
+    });
+    console.log(response);
+  } catch (error) {
+    console.error(error.response.data.message);
   }
   return response;
 };

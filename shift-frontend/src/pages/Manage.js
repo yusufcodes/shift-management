@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
-import { getUsers, getShiftsByUserId } from "../network/index";
+import {
+  getUsers,
+  getShiftsByUserId,
+  getCurrentShifts,
+} from "../network/index";
 import InputLabel from "@material-ui/core/InputLabel";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import authContext from "../context/authContext";
 import Shift from "../components/shift/Shift";
+import CustomDialog from "../components/global/CustomDialog";
 
 /*
       1. Get all users - endpoint
@@ -22,7 +27,10 @@ import Shift from "../components/shift/Shift";
 */
 
 export default function Manage() {
+  console.log("re-rendering manage...");
   const [allUsers, setAllUsers] = useState(null);
+  const [openDeleteDialog, setDeleteDialog] = React.useState(false);
+
   const auth = React.useContext(authContext);
 
   // Store the user ID of employee that is selected
@@ -30,10 +38,25 @@ export default function Manage() {
   const [shifts, setShifts] = useState(null);
 
   // On initial render: load users to select
+  const loadUsers = async () => {};
+
+  const loadCurrentShifts = async () => {
+    if (selectedUser.length < 1) {
+      console.log("No selected user");
+      // Output no user selected or similar
+      return;
+    }
+
+    const response = await getShiftsByUserId(auth.token, selectedUser);
+    if (!response) {
+      return;
+    }
+    setShifts(response.data.userShifts);
+  };
+
   useEffect(() => {
     (async () => {
       const response = await getUsers();
-      console.log(response);
       if (!response || response.status !== 200) {
         throw new Error("Manage.js: Could not get all users");
       }
@@ -46,17 +69,8 @@ export default function Manage() {
 
   // Load selected user's shifts
   useEffect(() => {
-    if (selectedUser.length < 1) {
-      console.log("No selected user");
-      // Output no user selected or similar
-      return;
-    }
     (async () => {
-      const response = await getShiftsByUserId(auth.token, selectedUser);
-      if (!response) {
-        return;
-      }
-      setShifts(response.data.userShifts);
+      await loadCurrentShifts();
     })();
   }, [selectedUser]);
 
@@ -67,6 +81,10 @@ export default function Manage() {
         endtime={item.endtime}
         id={item.id}
         admin
+        loadMethods={{
+          loadCurrentShifts: loadCurrentShifts,
+          setDeleteDialog: setDeleteDialog,
+        }}
       />
     );
   });
@@ -97,6 +115,12 @@ export default function Manage() {
       </FormControl>
       {shifts ? outputShifts : null}
       {!shifts && selectedUser.length > 1 ? outputNoShifts : null}
+      <CustomDialog
+        title="Delete Shift?"
+        description="You are about to delete this shift, are you sure?"
+        openDeleteDialog={openDeleteDialog}
+        setDeleteDialog={setDeleteDialog}
+      />
     </div>
   );
 }

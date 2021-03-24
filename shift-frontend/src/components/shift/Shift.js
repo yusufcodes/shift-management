@@ -2,6 +2,9 @@ import React from "react";
 import { makeStyles } from "@material-ui/core/styles";
 import { IconButton, Grid } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
+import { deleteShift } from "../../network/index";
+import authContext from "../../context/authContext";
+import CustomDialog from "../global/CustomDialog";
 
 const useStyles = makeStyles({
   root: {
@@ -22,8 +25,26 @@ export default function Shift({
   endtime,
   id = null,
   admin = false,
+  loadMethods = null,
 }) {
+  const auth = React.useContext(authContext);
   const classes = useStyles();
+
+  const [openDeleteDialog, setDeleteDialog] = React.useState(false);
+
+  const handleDelete = async () => {
+    console.log(id);
+    // Perform backend delete function
+    const response = await deleteShift(auth.token, id);
+    if (!response) {
+      throw new Error("Shift.js: Could not delete shift");
+    }
+
+    loadMethods?.loadCurrentShifts();
+
+    // Refetch user shifts -> this should auto update the DOM.
+    // Pass in method from Manage ?
+  };
 
   const shiftDate = new Date(starttime);
   const timeStart = shiftDate.toLocaleTimeString([], {
@@ -50,7 +71,7 @@ export default function Shift({
             classes={{
               colorPrimary: classes.iconColor,
             }}
-            onClick={() => console.log("delete shift of ID: " + id)}
+            onClick={() => loadMethods.setDeleteDialog(true)}
           >
             <DeleteIcon />
           </IconButton>
@@ -60,11 +81,13 @@ export default function Shift({
   }
 
   return (
-    <Grid container justify="space-between" className={classes.root}>
-      <Grid>
-        <h3>{shiftDate.toDateString()}</h3>
-        <h4>{`${timeStart} - ${timeEnd}`}</h4>
+    <>
+      <Grid container justify="space-between" className={classes.root}>
+        <Grid>
+          <h3>{shiftDate.toDateString()}</h3>
+          <h4>{`${timeStart} - ${timeEnd}`}</h4>
+        </Grid>
       </Grid>
-    </Grid>
+    </>
   );
 }
