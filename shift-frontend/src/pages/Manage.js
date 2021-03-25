@@ -9,8 +9,6 @@ import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import authContext from "../context/authContext";
 import Shift from "../components/shift/Shift";
-import CustomDialog from "../components/global/CustomDialog";
-
 /*
       1. Get all users - endpoint
 
@@ -29,16 +27,12 @@ import CustomDialog from "../components/global/CustomDialog";
 export default function Manage() {
   console.log("re-rendering manage...");
   const [allUsers, setAllUsers] = useState(null);
-  const [openDeleteDialog, setDeleteDialog] = React.useState(false);
 
   const auth = React.useContext(authContext);
 
   // Store the user ID of employee that is selected
   const [selectedUser, setSelectedUser] = useState("");
   const [shifts, setShifts] = useState(null);
-
-  // On initial render: load users to select
-  const loadUsers = async () => {};
 
   const loadCurrentShifts = async () => {
     if (selectedUser.length < 1) {
@@ -61,7 +55,11 @@ export default function Manage() {
         throw new Error("Manage.js: Could not get all users");
       }
       const userOptions = response.data.users.map((item) => {
-        return <option value={item.id}>{item.name}</option>;
+        return (
+          <option value={item.id} key={item.id}>
+            {item.name}
+          </option>
+        );
       });
       setAllUsers(userOptions);
     })();
@@ -77,13 +75,13 @@ export default function Manage() {
   const outputShifts = shifts?.map((item) => {
     return (
       <Shift
+        key={item.id}
         starttime={item.starttime}
         endtime={item.endtime}
         id={item.id}
         admin
         loadMethods={{
           loadCurrentShifts: loadCurrentShifts,
-          setDeleteDialog: setDeleteDialog,
         }}
       />
     );
@@ -115,12 +113,6 @@ export default function Manage() {
       </FormControl>
       {shifts ? outputShifts : null}
       {!shifts && selectedUser.length > 1 ? outputNoShifts : null}
-      <CustomDialog
-        title="Delete Shift?"
-        description="You are about to delete this shift, are you sure?"
-        openDeleteDialog={openDeleteDialog}
-        setDeleteDialog={setDeleteDialog}
-      />
     </div>
   );
 }

@@ -66,7 +66,11 @@ export const deleteShift = async (token, userId) => {
     });
     console.log(response);
   } catch (error) {
-    console.error(error.response.data.message);
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
   }
   return response;
 };

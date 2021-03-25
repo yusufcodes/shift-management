@@ -5,6 +5,13 @@ import DeleteIcon from "@material-ui/icons/Delete";
 import { deleteShift } from "../../network/index";
 import authContext from "../../context/authContext";
 import CustomDialog from "../global/CustomDialog";
+import Button from "@material-ui/core/Button";
+
+import Dialog from "@material-ui/core/Dialog";
+import DialogActions from "@material-ui/core/DialogActions";
+import DialogContent from "@material-ui/core/DialogContent";
+import DialogContentText from "@material-ui/core/DialogContentText";
+import DialogTitle from "@material-ui/core/DialogTitle";
 
 const useStyles = makeStyles({
   root: {
@@ -30,7 +37,15 @@ export default function Shift({
   const auth = React.useContext(authContext);
   const classes = useStyles();
 
-  const [openDeleteDialog, setDeleteDialog] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
+
+  const handleClose = () => {
+    setOpen(false);
+  };
 
   const handleDelete = async () => {
     console.log(id);
@@ -41,9 +56,6 @@ export default function Shift({
     }
 
     loadMethods?.loadCurrentShifts();
-
-    // Refetch user shifts -> this should auto update the DOM.
-    // Pass in method from Manage ?
   };
 
   const shiftDate = new Date(starttime);
@@ -59,24 +71,56 @@ export default function Shift({
   });
   if (admin) {
     return (
-      <Grid container justify="space-between" className={classes.root}>
-        <Grid>
-          <h3>{shiftDate.toDateString()}</h3>
-          <h4>{`${timeStart} - ${timeEnd}`}</h4>
+      <>
+        <Grid container justify="space-between" className={classes.root}>
+          <Grid>
+            <h3>{shiftDate.toDateString()}</h3>
+            <h4>{`${timeStart} - ${timeEnd}`}</h4>
+          </Grid>
+          <Grid>
+            <IconButton
+              aria-label="delete"
+              color="primary"
+              classes={{
+                colorPrimary: classes.iconColor,
+              }}
+              onClick={handleClickOpen}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Grid>
         </Grid>
-        <Grid>
-          <IconButton
-            aria-label="delete"
-            color="primary"
-            classes={{
-              colorPrimary: classes.iconColor,
-            }}
-            onClick={() => loadMethods.setDeleteDialog(true)}
-          >
-            <DeleteIcon />
-          </IconButton>
-        </Grid>
-      </Grid>
+        <Dialog
+          open={open}
+          onClose={handleClose}
+          aria-labelledby="delete-shift-dialog-title"
+          aria-describedby="delete-shift-dialog-description"
+        >
+          <DialogTitle id="delete-shift-title">
+            {"Delete this shift?"}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="delete-shift-description">
+              Are you sure you want to delete this shift?
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose} color="primary">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                handleClose();
+                handleDelete();
+              }}
+              color="primary"
+              autoFocus
+            >
+              OK
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 
