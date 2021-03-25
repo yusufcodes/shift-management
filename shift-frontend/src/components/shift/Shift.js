@@ -1,8 +1,8 @@
 import React from "react";
 import { makeStyles } from "@material-ui/core/styles";
-import { IconButton, Grid } from "@material-ui/core";
+import { IconButton, Grid, TextField } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
-import { deleteShift } from "../../network/index";
+import { deleteShift, updateShift } from "../../network/index";
 import authContext from "../../context/authContext";
 import CustomDialog from "../global/CustomDialog";
 import Button from "@material-ui/core/Button";
@@ -13,7 +13,7 @@ import DialogContent from "@material-ui/core/DialogContent";
 import DialogContentText from "@material-ui/core/DialogContentText";
 import DialogTitle from "@material-ui/core/DialogTitle";
 
-const useStyles = makeStyles({
+const useStyles = makeStyles((theme) => ({
   root: {
     backgroundColor: "#4a4e69",
     border: "1px solid #c7c7c7",
@@ -25,7 +25,16 @@ const useStyles = makeStyles({
   iconColor: {
     color: "#f2f2f2",
   },
-});
+  container: {
+    display: "flex",
+    flexWrap: "wrap",
+  },
+  textField: {
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    width: 200,
+  },
+}));
 // TODO: Pass in flag from backend to allow for shift element to be clickable by an admin
 export default function Shift({
   starttime,
@@ -37,14 +46,21 @@ export default function Shift({
   const auth = React.useContext(authContext);
   const classes = useStyles();
 
-  const [open, setOpen] = React.useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = React.useState(false);
+  // Open / close shift dialog
+  const [openEditDialog, setOpenEditDialog] = React.useState(false);
 
-  const handleClickOpen = () => {
-    setOpen(true);
+  const [starttimeForm, setStarttimeForm] = React.useState(
+    starttime.slice(0, 16)
+  );
+  const [endtimeForm, setEndtimeForm] = React.useState(endtime.slice(0, 16));
+
+  const handleClickOpenDelete = () => {
+    setOpenDeleteDialog(true);
   };
 
-  const handleClose = () => {
-    setOpen(false);
+  const handleCloseDelete = () => {
+    setOpenDeleteDialog(false);
   };
 
   const handleDelete = async () => {
@@ -52,7 +68,18 @@ export default function Shift({
     // Perform backend delete function
     const response = await deleteShift(auth.token, id);
     if (!response) {
-      throw new Error("Shift.js: Could not delete shift");
+      throw new Error("Shift.js - handleDelete: Could not delete shift");
+    }
+
+    loadMethods?.loadCurrentShifts();
+  };
+
+  const handleEdit = async () => {
+    const starttime = new Date(starttimeForm);
+    const endtime = new Date(endtimeForm);
+    const response = await updateShift(auth.token, id, starttime, endtime);
+    if (!response) {
+      throw new Error("Shift.js - handleEdit: Could not edit shift");
     }
 
     loadMethods?.loadCurrentShifts();
@@ -72,7 +99,12 @@ export default function Shift({
   if (admin) {
     return (
       <>
-        <Grid container justify="space-between" className={classes.root}>
+        <Grid
+          container
+          justify="space-between"
+          className={classes.root}
+          onClick={() => setOpenEditDialog(true)}
+        >
           <Grid>
             <h3>{shiftDate.toDateString()}</h3>
             <h4>{`${timeStart} - ${timeEnd}`}</h4>
@@ -84,15 +116,17 @@ export default function Shift({
               classes={{
                 colorPrimary: classes.iconColor,
               }}
-              onClick={handleClickOpen}
+              onClick={handleClickOpenDelete}
             >
               <DeleteIcon />
             </IconButton>
           </Grid>
         </Grid>
+
+        {/* Delete shift dialog */}
         <Dialog
-          open={open}
-          onClose={handleClose}
+          open={openDeleteDialog}
+          onClose={handleCloseDelete}
           aria-labelledby="delete-shift-dialog-title"
           aria-describedby="delete-shift-dialog-description"
         >
@@ -105,13 +139,64 @@ export default function Shift({
             </DialogContentText>
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleClose} color="primary">
+            <Button onClick={handleCloseDelete} color="primary">
               Cancel
             </Button>
             <Button
               onClick={() => {
-                handleClose();
+                handleCloseDelete();
                 handleDelete();
+              }}
+              color="primary"
+              autoFocus
+            >
+              OK
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit shift dialog */}
+        <Dialog
+          open={openEditDialog}
+          onClose={() => setOpenEditDialog(false)}
+          aria-labelledby="edit-shift-dialog-title"
+          aria-describedby="edit-shift-dialog-description"
+        >
+          <DialogTitle id="edit-shift-title">{"Edit Shift"}</DialogTitle>
+          <DialogContent>
+            <form className={classes.container} noValidate>
+              <TextField
+                id="datetime-start"
+                label="Start Time"
+                type="datetime-local"
+                defaultValue={starttimeForm}
+                className={classes.textField}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                onChange={(event) => setStarttimeForm(event.target.value)}
+              />
+              <TextField
+                id="datetime-end"
+                label="End Time"
+                type="datetime-local"
+                defaultValue={endtimeForm}
+                className={classes.textField}
+                InputLabelProps={{
+                  shrink: true,
+                }}
+                onChange={(event) => setEndtimeForm(event.target.value)}
+              />
+            </form>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenEditDialog(false)} color="primary">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setOpenEditDialog(false);
+                handleEdit();
               }}
               color="primary"
               autoFocus

@@ -18,7 +18,11 @@ export const getCurrentShifts = async (token) => {
     });
     console.log(response);
   } catch (error) {
-    console.error(error.response.data.message);
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
   }
   return response;
 };
@@ -32,7 +36,11 @@ export const getUsers = async () => {
     });
     console.log(response);
   } catch (error) {
-    console.error(error.response.data.message);
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
   }
   return response;
 };
@@ -49,19 +57,48 @@ export const getShiftsByUserId = async (token, userId) => {
     });
     console.log(response);
   } catch (error) {
-    console.error(error.response.data.message);
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
   }
   return response;
 };
 
-export const deleteShift = async (token, userId) => {
+export const deleteShift = async (token, shiftId) => {
   let response;
   try {
     response = await instance({
       method: "delete",
-      url: `/api/shift/${userId}`,
+      url: `/api/shift/${shiftId}`,
       headers: {
         "X-Authorization": token,
+      },
+    });
+    console.log(response);
+  } catch (error) {
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
+  }
+  return response;
+};
+
+export const updateShift = async (token, shiftId, starttime, endtime) => {
+  let response;
+  try {
+    response = await instance({
+      method: "patch",
+      url: `/api/shift/${shiftId}`,
+      headers: {
+        "X-Authorization": token,
+      },
+      data: {
+        starttime,
+        endtime,
       },
     });
     console.log(response);
@@ -88,7 +125,11 @@ export const login = async (email, password) => {
       },
     });
   } catch (error) {
-    console.error(error.response.data.message);
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
   }
   return response;
 };
