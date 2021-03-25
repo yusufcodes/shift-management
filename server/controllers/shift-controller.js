@@ -101,17 +101,20 @@ const getCurrentShifts = async (req, res, next) => {
 
 // POST: Add a new 'Shift' to the database
 const createShift = async (req, res, next) => {
+  console.log("Running createShift");
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new HttpError("Invalid inputs, please check your data", 422);
   }
 
-  const { datetime, employeeId } = req.body;
+  const { starttime, endtime, employeeId } = req.body;
+  console.log(starttime, endtime, employeeId);
 
   // TODO: Once I create Date selection on front end, pass this in here - currently just uses current date.
   const createdShift = new Shift({
-    starttime: new Date(),
-    endtime: new Date(),
+    starttime,
+    endtime,
     employeeId,
   });
 
@@ -128,8 +131,6 @@ const createShift = async (req, res, next) => {
     const error = new HttpError("Could not find user with given ID", 404);
     return next(error);
   }
-
-  console.log(user);
   /*
   - Run multiple operations independently but if one fails, undo all operations.
     - Sessions: Start a session, initiate the transaction, and once the transaction is successful,

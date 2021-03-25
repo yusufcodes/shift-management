@@ -15,6 +15,7 @@ router.use(checkAuth);
 
 router.get("/current", shiftController.getCurrentShifts);
 
+// todo: add checks here for inputs.
 router.post("/", shiftController.createShift);
 
 /* Note: Can have multiple middlewares such as here, we use express validator to perform
