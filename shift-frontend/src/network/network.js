@@ -112,6 +112,32 @@ export const updateShift = async (token, shiftId, starttime, endtime) => {
   return response;
 };
 
+export const addShift = async (token, employeeId, starttime, endtime) => {
+  let response;
+  try {
+    response = await instance({
+      method: "post",
+      url: `/api/shift/`,
+      headers: {
+        "X-Authorization": token,
+      },
+      data: {
+        starttime,
+        endtime,
+        employeeId,
+      },
+    });
+    console.log(response);
+  } catch (error) {
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
+  }
+  return response;
+};
+
 export const login = async (email, password) => {
   let response;
 

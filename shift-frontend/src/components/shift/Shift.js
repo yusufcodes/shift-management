@@ -1,12 +1,12 @@
 import React from "react";
 import { makeStyles } from "@material-ui/core/styles";
-import { IconButton, Grid, TextField } from "@material-ui/core";
+import { IconButton, Grid, TextField, Typography } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 import { deleteShift, updateShift } from "../../network/index";
 import authContext from "../../context/authContext";
 import CustomDialog from "../global/CustomDialog";
 import Button from "@material-ui/core/Button";
-
+import EditIcon from "@material-ui/icons/Edit";
 import Dialog from "@material-ui/core/Dialog";
 import DialogActions from "@material-ui/core/DialogActions";
 import DialogContent from "@material-ui/core/DialogContent";
@@ -102,24 +102,39 @@ export default function Shift({
         <Grid
           container
           justify="space-between"
+          direction="row"
           className={classes.root}
-          onClick={() => setOpenEditDialog(true)}
         >
-          <Grid>
-            <h3>{shiftDate.toDateString()}</h3>
-            <h4>{`${timeStart} - ${timeEnd}`}</h4>
+          <Grid item>
+            <Typography variant="h5">{shiftDate.toDateString()}</Typography>
+            <Typography variant="h6">{`${timeStart} - ${timeEnd}`}</Typography>
           </Grid>
-          <Grid>
-            <IconButton
-              aria-label="delete"
-              color="primary"
-              classes={{
-                colorPrimary: classes.iconColor,
-              }}
-              onClick={handleClickOpenDelete}
-            >
-              <DeleteIcon />
-            </IconButton>
+
+          <Grid item>
+            <Grid>
+              <IconButton
+                aria-label="edit"
+                color="primary"
+                classes={{
+                  colorPrimary: classes.iconColor,
+                }}
+                onClick={() => setOpenEditDialog(true)}
+              >
+                <EditIcon />
+              </IconButton>
+            </Grid>
+            <Grid>
+              <IconButton
+                aria-label="delete"
+                color="primary"
+                classes={{
+                  colorPrimary: classes.iconColor,
+                }}
+                onClick={handleClickOpenDelete}
+              >
+                <DeleteIcon />
+              </IconButton>
+            </Grid>
           </Grid>
         </Grid>
 

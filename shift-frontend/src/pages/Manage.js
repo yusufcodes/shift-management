@@ -1,39 +1,48 @@
 import React, { useEffect, useState } from "react";
-import {
-  getUsers,
-  getShiftsByUserId,
-  getCurrentShifts,
-} from "../network/index";
+import { getUsers, getShiftsByUserId, addShift } from "../network/index";
 import InputLabel from "@material-ui/core/InputLabel";
+import {
+  Button,
+  Grid,
+  Typography,
+  Dialog,
+  TextField,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  makeStyles,
+} from "@material-ui/core";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import authContext from "../context/authContext";
 import Shift from "../components/shift/Shift";
-/*
-      1. Get all users - endpoint
+import AddBoxIcon from "@material-ui/icons/AddBox";
 
-      2. Response -> Use Material selector to populate dropdown 
-
-      3. onChange (or similar) of dropdown:
-      - getShiftsById (Get user ID of the selected person)
-      - Store result in state
-
-      4. If shifts state exists -> Output shifts - use Shift component already made
-
-      5. Extend shift component so that it can be edited.
-
-*/
+const useStyles = makeStyles((theme) => ({
+  container: {
+    display: "flex",
+    flexWrap: "wrap",
+  },
+  textField: {
+    marginLeft: theme.spacing(1),
+    marginRight: theme.spacing(1),
+    width: 200,
+  },
+}));
 
 export default function Manage() {
-  console.log("re-rendering manage...");
+  const [selectedUser, setSelectedUser] = useState("");
+  const [shifts, setShifts] = useState(null);
   const [allUsers, setAllUsers] = useState(null);
+  const [openAddDialog, setOpenAddDialog] = React.useState(false);
+  const [starttimeForm, setStarttimeForm] = React.useState("");
+  const [endtimeForm, setEndtimeForm] = React.useState("");
+
+  const classes = useStyles();
 
   const auth = React.useContext(authContext);
 
   // Store the user ID of employee that is selected
-  const [selectedUser, setSelectedUser] = useState("");
-  const [shifts, setShifts] = useState(null);
-
   const loadCurrentShifts = async () => {
     if (selectedUser.length < 1) {
       console.log("No selected user");
@@ -46,6 +55,23 @@ export default function Manage() {
       return;
     }
     setShifts(response.data.userShifts);
+  };
+
+  const handleAdd = async () => {
+    const starttime = new Date(starttimeForm);
+    const endtime = new Date(endtimeForm);
+    console.log(selectedUser);
+    const response = await addShift(
+      auth.token,
+      selectedUser,
+      starttime,
+      endtime
+    );
+    if (!response) {
+      throw new Error("Manage.js - handleAdd: Could not add new shift");
+    }
+
+    loadCurrentShifts();
   };
 
   useEffect(() => {
@@ -87,32 +113,100 @@ export default function Manage() {
     );
   });
 
+  const outputAddShiftButton = (
+    <Grid>
+      <Button
+        variant="contained"
+        onClick={() => setOpenAddDialog(true)}
+        color="primary"
+        startIcon={<AddBoxIcon />}
+      >
+        Add Shift
+      </Button>
+    </Grid>
+  );
+
   const outputNoShifts = <p>No shifts for this user</p>;
 
   return (
-    <div>
-      <h1>Manage Shifts</h1>
-      <h2>Select a user: </h2>
-      <FormControl>
-        <InputLabel htmlFor="age-select">Employee</InputLabel>
-        <Select
-          native
-          value={selectedUser}
-          onChange={(event) => {
-            setShifts(null);
-            setSelectedUser(event.target.value);
-          }}
-          inputProps={{
-            name: "employee",
-            id: "age-select",
-          }}
-        >
-          <option aria-label="None" value="" />
-          {allUsers}
-        </Select>
-      </FormControl>
-      {shifts ? outputShifts : null}
+    <Grid>
+      <Typography variant="h2">Manage Shifts</Typography>
+      <Typography variant="h3">Select a user: </Typography>
+      <Grid container alignItems="center" justify="space-around">
+        <Grid>
+          <FormControl>
+            <InputLabel htmlFor="age-select">Employee</InputLabel>
+            <Select
+              native
+              value={selectedUser}
+              onChange={(event) => {
+                setShifts(null);
+                setSelectedUser(event.target.value);
+              }}
+              inputProps={{
+                name: "employee",
+                id: "age-select",
+              }}
+            >
+              <option aria-label="None" value="" />
+              {allUsers}
+            </Select>
+          </FormControl>
+        </Grid>
+        {shifts && outputAddShiftButton}
+      </Grid>
+      {shifts && outputShifts}
       {!shifts && selectedUser.length > 1 ? outputNoShifts : null}
-    </div>
+      {/* Edit shift dialog */}
+      <Dialog
+        open={openAddDialog}
+        onClose={() => setOpenAddDialog(false)}
+        aria-labelledby="add-shift-dialog-title"
+        aria-describedby="add-shift-dialog-description"
+      >
+        <DialogTitle id="add-shift-title">{"Add Shift"}</DialogTitle>
+        <DialogContent>
+          <form className={classes.container} noValidate>
+            <TextField
+              id="datetime-start"
+              label="Start Time"
+              type="datetime-local"
+              defaultValue={starttimeForm}
+              className={classes.textField}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(event) => setStarttimeForm(event.target.value)}
+            />
+            <TextField
+              id="datetime-end"
+              label="End Time"
+              type="datetime-local"
+              defaultValue={endtimeForm}
+              className={classes.textField}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(event) => setEndtimeForm(event.target.value)}
+            />
+          </form>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenAddDialog(false)} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              setOpenAddDialog(false);
+              handleAdd();
+            }}
+            color="primary"
+            autoFocus
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Grid>
   );
 }
