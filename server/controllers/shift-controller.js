@@ -101,9 +101,11 @@ const getCurrentShifts = async (req, res, next) => {
           $gte: new Date(date.getFullYear(), date.getMonth(), 1),
           $lt: new Date(date.getFullYear(), date.getMonth() + 1, 0),
         },
-      });
+      }).sort("starttime");
     } else {
-      userShifts = await Shift.find({ employeeId: employeeId });
+      userShifts = await Shift.find({ employeeId: employeeId }).sort(
+        "starttime"
+      );
     }
   } catch (err) {
     const error = new HttpError(
