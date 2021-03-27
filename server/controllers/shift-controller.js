@@ -64,6 +64,13 @@ const getCurrentShifts = async (req, res, next) => {
   // console.log(req);
 
   const employeeId = req.userData.userId;
+  const { month } = req.query;
+  console.log(req.query);
+  console.log(month);
+
+  if (month) {
+    console.log("Month exists and is true");
+  }
 
   if (!employeeId) {
     const error = new HttpError(
@@ -74,9 +81,30 @@ const getCurrentShifts = async (req, res, next) => {
   }
 
   let userShifts;
+  const date = new Date();
+
+  // starttime: greater than or equal to $currentMonthStartDay
+  // starttime: less than $currentMonthEndDay
+  // const userShiftsMonth = await Shift.find({
+  //   employeeId: employeeId,
+  //   starttime: {
+  //     $gte: new Date(date.getFullYear(), date.getMonth(), 1),
+  //     $lt: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+  //   },
+  // });
 
   try {
-    userShifts = await Shift.find({ employeeId: employeeId });
+    if (month) {
+      userShifts = await Shift.find({
+        employeeId: employeeId,
+        starttime: {
+          $gte: new Date(date.getFullYear(), date.getMonth(), 1),
+          $lt: new Date(date.getFullYear(), date.getMonth() + 1, 0),
+        },
+      });
+    } else {
+      userShifts = await Shift.find({ employeeId: employeeId });
+    }
   } catch (err) {
     const error = new HttpError(
       "Database: Issue with getting shifts for this user",

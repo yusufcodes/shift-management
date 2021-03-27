@@ -155,7 +155,15 @@ const login = async (req, res, next) => {
     existing.admin
   );
 
-  res.status(201).json({ userId: existing.id, email: existing.email, token });
+  res
+    .status(201)
+    .json({
+      userId: existing.id,
+      email: existing.email,
+      name: existing.name,
+      admin: existing.admin,
+      token,
+    });
 };
 
 exports.getUsers = getUsers;

@@ -15,6 +15,8 @@ router.use(checkAuth);
 
 router.get("/current", shiftController.getCurrentShifts);
 
+router.get("/current", shiftController.getCurrentShifts);
+
 // todo: add checks here for inputs.
 router.post("/", shiftController.createShift);
 
