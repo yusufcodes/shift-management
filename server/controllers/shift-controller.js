@@ -28,6 +28,35 @@ const getShiftById = async ({ params }, res, next) => {
   res.json({ shift: shift.toObject({ getters: true }) });
 };
 
+const getAllShifts = async (req, res, next) => {
+  let allShifts;
+
+  try {
+    allShifts = await Shift.find({}).populate("employeeId").sort("starttime");
+  } catch (err) {
+    const error = new HttpError("Database: Issue with getting all shifts", 500);
+    return next(error); // Stop code execution
+  }
+
+  if (!allShifts) {
+    const error = new HttpError("Could not retrieve all shifts", 500);
+    return next(error);
+  }
+
+  const transformedShifts = allShifts.map(
+    ({ starttime, endtime, employeeId }, index) => {
+      return {
+        id: item["_id"],
+        start: starttime,
+        end: endtime,
+        name: employeeId.name,
+      };
+    }
+  );
+
+  res.json({ allShifts: transformedShifts });
+};
+
 // GET: Return 0 or more shifts associated with Employee
 const getShiftsByUserId = async ({ params }, res, next) => {
   const employeeId = params.uid;
@@ -35,7 +64,7 @@ const getShiftsByUserId = async ({ params }, res, next) => {
   let userShifts;
 
   try {
-    userShifts = await Shift.find({ employeeId: employeeId });
+    userShifts = await Shift.find({ employeeId: employeeId }).sort("starttime");
   } catch (err) {
     const error = new HttpError(
       "Database: Issue with getting shifts for this user",
@@ -64,13 +93,7 @@ const getCurrentShifts = async (req, res, next) => {
   // console.log(req);
 
   const employeeId = req.userData.userId;
-  const { month } = req.query;
-  console.log(req.query);
-  console.log(month);
-
-  if (month) {
-    console.log("Month exists and is true");
-  }
+  const { month, week } = req.query;
 
   if (!employeeId) {
     const error = new HttpError(
@@ -80,20 +103,25 @@ const getCurrentShifts = async (req, res, next) => {
     return next(error);
   }
 
+  //todo: remove from prototype
+  Date.prototype.GetFirstDayOfWeek = function () {
+    return new Date(
+      this.setDate(
+        this.getDate() - this.getDay() + (this.getDay() == 0 ? -6 : 1)
+      )
+    );
+  };
+
+  Date.prototype.GetFirstDayOfNextWeek = function () {
+    return new Date(this.setDate(this.getDate() - this.getDay() + 8));
+  };
+
   let userShifts;
   const date = new Date();
 
-  // starttime: greater than or equal to $currentMonthStartDay
-  // starttime: less than $currentMonthEndDay
-  // const userShiftsMonth = await Shift.find({
-  //   employeeId: employeeId,
-  //   starttime: {
-  //     $gte: new Date(date.getFullYear(), date.getMonth(), 1),
-  //     $lt: new Date(date.getFullYear(), date.getMonth() + 1, 0),
-  //   },
-  // });
-
   try {
+    userShifts = await Shift.find({ employeeId: employeeId }).sort("starttime");
+
     if (month) {
       userShifts = await Shift.find({
         employeeId: employeeId,
@@ -102,10 +130,16 @@ const getCurrentShifts = async (req, res, next) => {
           $lt: new Date(date.getFullYear(), date.getMonth() + 1, 0),
         },
       }).sort("starttime");
-    } else {
-      userShifts = await Shift.find({ employeeId: employeeId }).sort(
-        "starttime"
-      );
+    }
+
+    if (week) {
+      userShifts = await Shift.find({
+        employeeId: employeeId,
+        starttime: {
+          $gte: date.GetFirstDayOfWeek(),
+          $lt: date.GetFirstDayOfNextWeek(),
+        },
+      }).sort("starttime");
     }
   } catch (err) {
     const error = new HttpError(
@@ -281,3 +315,4 @@ exports.getCurrentShifts = getCurrentShifts;
 exports.createShift = createShift;
 exports.updateShift = updateShift;
 exports.deleteShift = deleteShift;
+exports.getAllShifts = getAllShifts;

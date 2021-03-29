@@ -6,14 +6,14 @@ const checkAuth = require("../middleware/auth");
 
 const router = express.Router();
 
-router.get("/shift/:sid", shiftController.getShiftById);
+router.get("/all", shiftController.getAllShifts);
+
+router.get("/:sid", shiftController.getShiftById);
 
 router.get("/user/:uid", shiftController.getShiftsByUserId);
 
 // Any request past this point must have a token / be authenticated.
 router.use(checkAuth);
-
-router.get("/current", shiftController.getCurrentShifts);
 
 router.get("/current", shiftController.getCurrentShifts);
 
