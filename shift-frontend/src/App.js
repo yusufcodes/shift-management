@@ -29,10 +29,24 @@ theme = responsiveFontSizes(theme);
 
 function App() {
   const [token, setToken] = useState("");
+  const [admin, setAdmin] = useState(null);
+  const [email, setEmail] = useState(null);
+  const [name, setName] = useState(null);
+
+  const setUserDetails = (admin, name, email) => {
+    setAdmin(admin);
+    setName(name);
+    setEmail(email);
+  };
 
   const setLoginToken = (token) => {
     console.log(`Setting token: ${token}`);
     setToken(token);
+  };
+
+  // TODO: Write function to log the user out
+  const logout = () => {
+    setToken(null);
   };
 
   return (
@@ -41,7 +55,11 @@ function App() {
         value={{
           isLoggedIn: !!token,
           token: token,
+          isAdmin: admin,
+          name: name,
+          email: email,
           setLoginToken: setLoginToken,
+          setUserDetails: setUserDetails,
         }}
       >
         <ThemeProvider theme={theme}>

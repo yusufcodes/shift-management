@@ -5,3 +5,4 @@ export { getShiftsByUserId } from "./network";
 export { deleteShift } from "./network";
 export { updateShift } from "./network";
 export { addShift } from "./network";
+export { getAllShifts } from "./network";

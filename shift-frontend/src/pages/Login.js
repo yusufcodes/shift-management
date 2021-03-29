@@ -28,7 +28,7 @@ const useStyles = makeStyles({
 export default function Login() {
   // const { setLoginToken } = useAuth();
   const auth = React.useContext(authContext);
-  const { setLoginToken } = auth;
+  const { setLoginToken, setUserDetails } = auth;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,7 +42,12 @@ export default function Login() {
     }
     if (performLogin.status === 201) {
       console.log(performLogin);
-      setLoginToken(performLogin.data.token);
+
+      const { data } = performLogin;
+
+      setLoginToken(data.token);
+      setUserDetails(data.admin, data.name, data.email);
+
       setRedirect("/dashboard");
     }
   };

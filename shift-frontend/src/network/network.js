@@ -6,12 +6,22 @@ let instance = axios.create({
   // headers: {'X-Custom-Header': 'foobar'}
 });
 
-export const getCurrentShifts = async (token) => {
+export const getCurrentShifts = async (token, month = false, week = false) => {
   let response;
+  let url = "/api/shift/current";
+
+  if (month) {
+    url = "/api/shift/current?month=true";
+  }
+  // todo: make this work on backend
+  if (week) {
+    url = "/api/shift/current?week=true";
+  }
+
   try {
     response = await instance({
       method: "get",
-      url: "/api/shift/current",
+      url: url,
       headers: {
         "X-Authorization": token,
       },
@@ -51,6 +61,27 @@ export const getShiftsByUserId = async (token, userId) => {
     response = await instance({
       method: "get",
       url: `/api/shift/user/${userId}`,
+      headers: {
+        "X-Authorization": token,
+      },
+    });
+    console.log(response);
+  } catch (error) {
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
+  }
+  return response;
+};
+
+export const getAllShifts = async (token) => {
+  let response;
+  try {
+    response = await instance({
+      method: "get",
+      url: `/api/shift/all`,
       headers: {
         "X-Authorization": token,
       },
