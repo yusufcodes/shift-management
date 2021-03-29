@@ -44,9 +44,9 @@ const getAllShifts = async (req, res, next) => {
   }
 
   const transformedShifts = allShifts.map(
-    ({ starttime, endtime, employeeId }, index) => {
+    ({ _id, starttime, endtime, employeeId }, index) => {
       return {
-        id: item["_id"],
+        id: _id,
         start: starttime,
         end: endtime,
         name: employeeId.name,
