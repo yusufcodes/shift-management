@@ -98,6 +98,15 @@ export default function Menu() {
             </Link>
           ))}
         </List>
+        <Button
+          variant="contained"
+          onClick={() => {
+            auth.logout();
+            window.location.replace(`http://www.${window.location.host}/login`);
+          }}
+        >
+          Logout
+        </Button>
       </div>
     </>
   );
