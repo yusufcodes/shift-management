@@ -2,9 +2,10 @@ import React, { useEffect, useState } from "react";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
   getUsers,
-  getShiftsByUserId,
   addShift,
+  updateShift,
   getAllShifts,
+  deleteShift,
 } from "../network/index";
 import InputLabel from "@material-ui/core/InputLabel";
 import {
@@ -15,18 +16,17 @@ import {
   TextField,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   makeStyles,
+  IconButton,
 } from "@material-ui/core";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
 import authContext from "../context/authContext";
-import Shift from "../components/shift/Shift";
-import AddBoxIcon from "@material-ui/icons/AddBox";
-
-// Calendar stuff
+import DeleteIcon from "@material-ui/icons/Delete";
+import moment from "moment";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
-
 import format from "date-fns/format";
 import parse from "date-fns/parse";
 import startOfWeek from "date-fns/startOfWeek";
@@ -48,36 +48,31 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Manage() {
-  const [selectedUser, setSelectedUser] = useState("");
-  const [shifts, setShifts] = useState(null);
   const [allUsers, setAllUsers] = useState(null);
+  const [allShifts, setAllShifts] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedShiftId, setSelectedShiftId] = useState(null);
+
+  // Add shift: start and end
   const [starttimeForm, setStarttimeForm] = React.useState("");
   const [endtimeForm, setEndtimeForm] = React.useState("");
-  const [allShifts, setAllShifts] = useState(null);
-  const [openAddDialog, setOpenAddDialog] = React.useState(false);
 
+  // Edit shift: start and end
+  const [startEdit, setStartEdit] = React.useState(null);
+  const [endEdit, setEndEdit] = React.useState(null);
+
+  // Dialog state
   const [openAddCalendarDialog, setOpenAddCalendarDialog] = React.useState(
     false
   );
+  const [openEditCalendarDialog, setOpenEditCalendarDialog] = React.useState(
+    false
+  );
+  const [openDeleteDialog, setOpenDeleteDialog] = React.useState(false);
+  const [editDialogName, setEditDialogName] = React.useState(null);
 
   const classes = useStyles();
   const auth = React.useContext(authContext);
-
-  // Store the user ID of employee that is selected
-  const loadCurrentShifts = async () => {
-    if (selectedUser?.length < 1) {
-      console.log("No selected user");
-      // Output no user selected or similar
-      return;
-    }
-
-    // todo: error handling
-    const response = await getShiftsByUserId(auth.token, selectedUser);
-    if (!response) {
-      return;
-    }
-    setShifts(response.data.userShifts);
-  };
 
   const loadAllShifts = async () => {
     const response = await getAllShifts(auth.token);
@@ -86,6 +81,7 @@ export default function Manage() {
     }
     const allEvents = response.data.allShifts.map((item) => {
       return {
+        shiftId: item.id,
         title: item.name,
         start: new Date(item.start),
         end: new Date(item.end),
@@ -107,11 +103,35 @@ export default function Manage() {
       throw new Error("Manage.js - handleAdd: Could not add new shift");
     }
 
-    loadCurrentShifts();
     loadAllShifts();
   };
 
-  // Load all users
+  const handleEdit = async () => {
+    const starttime = new Date(startEdit);
+    const endtime = new Date(endEdit);
+    const response = await updateShift(
+      auth.token,
+      selectedShiftId,
+      starttime,
+      endtime
+    );
+    if (!response) {
+      throw new Error("Manage.js - handleAdd: Could not edit shift");
+    }
+
+    loadAllShifts();
+  };
+
+  const handleDelete = async () => {
+    const response = await deleteShift(auth.token, selectedShiftId);
+    if (!response) {
+      throw new Error("Shift.js - handleDelete: Could not delete shift");
+    }
+
+    loadAllShifts();
+  };
+
+  // Load all users when selecting who to create a shift for
   useEffect(() => {
     (async () => {
       const response = await getUsers();
@@ -129,55 +149,12 @@ export default function Manage() {
     })();
   }, []);
 
-  // Load all shifts
+  // Load all shifts from backend
   useEffect(() => {
     (async () => {
       await loadAllShifts();
     })();
   }, []);
-
-  // Load selected user's shifts
-  useEffect(() => {
-    (async () => {
-      await loadCurrentShifts();
-    })();
-  }, [selectedUser]);
-
-  useEffect(() => {
-    console.log("All Shifts Loaded:");
-    console.log(allShifts);
-  }, [allShifts]);
-
-  const outputAddShiftButton = (
-    <Grid>
-      <Button
-        variant="contained"
-        onClick={() => setOpenAddDialog(true)}
-        color="primary"
-        startIcon={<AddBoxIcon />}
-      >
-        Add Shift
-      </Button>
-    </Grid>
-  );
-
-  const outputNoShifts = <p>No shifts for this user</p>;
-
-  const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek,
-    getDay,
-    locales,
-  });
-  /*
-  1. Get ALL shifts - write backend method for this:
-
-  2. Store in state
-
-  3. Once this exists, do the following with the data:
-
-  */
 
   const AddShiftCalendar = (
     <Dialog
@@ -221,10 +198,9 @@ export default function Manage() {
                 Cancel
               </Button>
               <Button
-                onClick={() => {
+                onClick={async () => {
                   setOpenAddCalendarDialog(false);
-                  handleAdd();
-                  console.log("perform add shift here");
+                  await handleAdd();
                 }}
                 color="primary"
                 autoFocus
@@ -238,34 +214,134 @@ export default function Manage() {
     </Dialog>
   );
 
+  const EditShiftCalendar = (
+    <Dialog
+      open={openEditCalendarDialog}
+      onClose={() => setOpenEditCalendarDialog(false)}
+      aria-labelledby="edit-shift-dialog-title"
+      aria-describedby="edit-shift-dialog-description"
+    >
+      <DialogTitle id="edit-shift-title">{`Edit Shift - ${editDialogName}`}</DialogTitle>
+      <DialogContent>
+        {/* Date Time Picker */}
+        <form className={classes.container} noValidate>
+          <TextField
+            id="datetime-start"
+            label="Start Time"
+            type="datetime-local"
+            defaultValue={startEdit}
+            className={classes.textField}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            onChange={(event) => setStartEdit(event.target.value)}
+          />
+          <TextField
+            id="datetime-end"
+            label="End Time"
+            type="datetime-local"
+            defaultValue={endEdit}
+            className={classes.textField}
+            InputLabelProps={{
+              shrink: true,
+            }}
+            onChange={(event) => setEndEdit(event.target.value)}
+          />
+          <IconButton
+            aria-label="delete"
+            color="primary"
+            classes={{
+              colorPrimary: classes.iconColor,
+            }}
+            onClick={() => setOpenDeleteDialog(true)}
+          >
+            <DeleteIcon />
+          </IconButton>
+          <DialogActions>
+            <Button
+              onClick={() => setOpenEditCalendarDialog(false)}
+              color="primary"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                setOpenEditCalendarDialog(false);
+                await handleEdit();
+              }}
+              color="primary"
+              autoFocus
+            >
+              OK
+            </Button>
+          </DialogActions>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+
+  const DeleteShiftDialog = (
+    <>
+      {/* Delete shift dialog */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={() => setOpenDeleteDialog(false)}
+        aria-labelledby="delete-shift-dialog-title"
+        aria-describedby="delete-shift-dialog-description"
+      >
+        <DialogTitle id="delete-shift-title">
+          {"Delete this shift?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="delete-shift-description">
+            Are you sure you want to delete this shift?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDeleteDialog(false)} color="primary">
+            Cancel
+          </Button>
+          <Button
+            onClick={async () => {
+              setOpenDeleteDialog(false);
+              setOpenEditCalendarDialog(false);
+              await handleDelete();
+            }}
+            color="primary"
+            autoFocus
+          >
+            OK
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
+
+  const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek,
+    getDay,
+    locales,
+  });
+
   const MyCalendar = (
-    // onSelectEvent: (event: Object, e: SyntheticEvent) => any
-    // onSelecting - Time view: (range: { start: Date, end: Date }) => ?boolean
-    // selected
     <Calendar
       selectable
-      // onSelecting={({ start, end }) => {
-      //   console.log(start);
-      //   console.log(end);
-      //   /*
-      // - Set start and end times
-      // - Open modal to add the shift
-      // - On submit: reload all shifts
-      // */
-      //   setSelectedStartDate(start);
-      //   setSelectedEndDate(end);
-      // }}
       onSelectSlot={({ start, end }) => {
-        // setSelectedStartDate(start);
-        // setSelectedEndDate(end);
         setSelectedUser(null);
-
         setStarttimeForm(start);
         setEndtimeForm(end);
-        // Open confirmation dialog:
         setOpenAddCalendarDialog(true);
-        // Select user
-        // Confirm shift for the currently selected user?
+      }}
+      onSelectEvent={(event, e) => {
+        const { shiftId, title, start, end } = event;
+
+        setEditDialogName(title);
+        setSelectedShiftId(shiftId);
+        setStartEdit(moment(new Date(start)).format("YYYY-MM-DDTkk:mm"));
+        setEndEdit(moment(new Date(end)).format("YYYY-MM-DDTkk:mm"));
+        setOpenEditCalendarDialog(true);
       }}
       localizer={localizer}
       events={allShifts}
@@ -282,107 +358,10 @@ export default function Manage() {
       <Grid>
         <Typography variant="h4">Manage Shifts</Typography>
         {allShifts && MyCalendar}
-        {/* Add shift from calendar dialog */}
         {AddShiftCalendar}
+        {EditShiftCalendar}
+        {DeleteShiftDialog}
       </Grid>
-
-      {/* Old Code Below */}
-
-      {/* <Typography variant="h3">Select a user: </Typography> */}
-      {/* Dropdown: select employee */}
-      {/* <Grid container alignItems="center" justify="space-around">
-        <Grid>
-          <FormControl>
-            <InputLabel htmlFor="age-select">Employee</InputLabel>
-            <Select
-              native
-              value={selectedUser}
-              onChange={(event) => {
-                setShifts(null);
-                setSelectedUser(event.target.value);
-              }}
-              inputProps={{
-                name: "employee",
-                id: "age-select",
-              }}
-            >
-              <option aria-label="None" value="" />
-              {allUsers}
-            </Select>
-          </FormControl>
-        </Grid>
-        {shifts && outputAddShiftButton}
-      </Grid> */}
-      {/* {shifts && outputShifts} */}
-      {/* {!shifts && selectedUser?.length > 1 ? outputNoShifts : null} */}
-
-      {/* Add shift dialog */}
-      {/* <Dialog
-        open={openAddDialog}
-        onClose={() => setOpenAddDialog(false)}
-        aria-labelledby="add-shift-dialog-title"
-        aria-describedby="add-shift-dialog-description"
-      >
-        <DialogTitle id="add-shift-title">{"Add Shift"}</DialogTitle>
-        <DialogContent>
-          <FormControl>
-            <InputLabel htmlFor="age-select">Employee</InputLabel>
-            <Select
-              native
-              value={selectedUser}
-              onChange={(event) => {
-                setSelectedUser(event.target.value);
-              }}
-              inputProps={{
-                name: "employee",
-                id: "age-select",
-              }}
-            >
-              <option aria-label="None" value="" />
-              {allUsers}
-            </Select>
-          </FormControl>
-          <form className={classes.container} noValidate>
-            <TextField
-              id="datetime-start"
-              label="Start Time"
-              type="datetime-local"
-              defaultValue={starttimeForm}
-              className={classes.textField}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              onChange={(event) => setStarttimeForm(event.target.value)}
-            />
-            <TextField
-              id="datetime-end"
-              label="End Time"
-              type="datetime-local"
-              defaultValue={endtimeForm}
-              className={classes.textField}
-              InputLabelProps={{
-                shrink: true,
-              }}
-              onChange={(event) => setEndtimeForm(event.target.value)}
-            />
-          </form>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenAddDialog(false)} color="primary">
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              setOpenAddDialog(false);
-              handleAdd();
-            }}
-            color="primary"
-            autoFocus
-          >
-            OK
-          </Button>
-        </DialogActions>
-      </Dialog> */}
     </>
   );
 }
