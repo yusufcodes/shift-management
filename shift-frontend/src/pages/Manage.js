@@ -90,6 +90,7 @@ export default function Manage() {
   const [dayError, setDayError] = useState(false);
   const [timeError, setTimeError] = useState(false);
   const [inputError, setInputError] = useState(false);
+  const [lengthError, setLengthError] = useState(false);
 
   const classes = useStyles();
 
@@ -132,6 +133,11 @@ export default function Manage() {
     const startDay = start.toISOString().split("T")[0];
     const endDay = end.toISOString().split("T")[0];
 
+    const startTime = parseInt(start.toISOString().split("T")[1], 10);
+    const endTime = parseInt(end.toISOString().split("T")[1], 10);
+
+    const hourDifference = endTime - startTime;
+
     // Check that start begins before the end - works
     if (!(start < end)) {
       console.log("checkDates: Start date is later than end date");
@@ -142,6 +148,12 @@ export default function Manage() {
     // Check that the dates are on the same day - works
     if (!(startDay === endDay)) {
       setDayError(true);
+      return true;
+    }
+
+    // Check that shift is not longer than 10 hours
+    if (hourDifference > 10) {
+      setLengthError(true);
       return true;
     }
 
@@ -344,6 +356,11 @@ export default function Manage() {
               Invalid date(s) entered, please try again
             </Typography>
           )}
+          {lengthError && (
+            <Typography className={classes.error}>
+              Shift should not exceed 10 hours
+            </Typography>
+          )}
           <DialogActions>
             <Button
               onClick={() => setOpenEditCalendarDialog(false)}
@@ -425,7 +442,10 @@ export default function Manage() {
       }}
       onSelectEvent={(event) => {
         const { shiftId, title, start, end } = event;
-
+        setInputError(false);
+        setTimeError(false);
+        setDayError(false);
+        setLengthError(false);
         setEditDialogName(title);
         setSelectedShiftId(shiftId);
         setStartEdit(moment(new Date(start)).format("YYYY-MM-DDTkk:mm"));
