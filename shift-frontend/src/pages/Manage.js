@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
   getUsers,
@@ -23,8 +24,8 @@ import {
 } from "@material-ui/core";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
-import authContext from "../context/authContext";
 import DeleteIcon from "@material-ui/icons/Delete";
+import getUserData from "../utils/getUserData";
 import moment from "moment";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import format from "date-fns/format";
@@ -45,37 +46,56 @@ const useStyles = makeStyles((theme) => ({
     marginRight: theme.spacing(1),
     width: 200,
   },
+  error: {
+    color: "red",
+  },
 }));
 
 export default function Manage() {
+  const [userData, setUserData] = useState(null);
+
+  const checkLogin = () => {
+    const userData = getUserData();
+    if (!userData) {
+      console.log("Manage: NOT LOGGED IN - REDIRECT");
+      window.location.replace(`http://${window.location.host}/login`);
+      return;
+    }
+    setUserData(userData);
+  };
+
+  useEffect(() => {
+    checkLogin();
+  }, []);
+
   const [allUsers, setAllUsers] = useState(null);
   const [allShifts, setAllShifts] = useState(null);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedShiftId, setSelectedShiftId] = useState(null);
 
   // Add shift: start and end
-  const [starttimeForm, setStarttimeForm] = React.useState("");
-  const [endtimeForm, setEndtimeForm] = React.useState("");
+  const [starttimeForm, setStarttimeForm] = useState("");
+  const [endtimeForm, setEndtimeForm] = useState("");
 
   // Edit shift: start and end
-  const [startEdit, setStartEdit] = React.useState(null);
-  const [endEdit, setEndEdit] = React.useState(null);
+  const [startEdit, setStartEdit] = useState(null);
+  const [endEdit, setEndEdit] = useState(null);
 
   // Dialog state
-  const [openAddCalendarDialog, setOpenAddCalendarDialog] = React.useState(
-    false
-  );
-  const [openEditCalendarDialog, setOpenEditCalendarDialog] = React.useState(
-    false
-  );
-  const [openDeleteDialog, setOpenDeleteDialog] = React.useState(false);
-  const [editDialogName, setEditDialogName] = React.useState(null);
+  const [openAddCalendarDialog, setOpenAddCalendarDialog] = useState(false);
+  const [openEditCalendarDialog, setOpenEditCalendarDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [editDialogName, setEditDialogName] = useState(null);
+
+  const [dayError, setDayError] = useState(false);
+  const [timeError, setTimeError] = useState(false);
+  const [inputError, setInputError] = useState(false);
 
   const classes = useStyles();
-  const auth = React.useContext(authContext);
 
   const loadAllShifts = async () => {
-    const response = await getAllShifts(auth.token);
+    checkLogin();
+    const response = await getAllShifts(userData?.token);
     if (!response) {
       return;
     }
@@ -90,11 +110,51 @@ export default function Manage() {
     setAllShifts(allEvents);
   };
 
+  // Pass in Dates to be checked
+  const checkDates = (start, end) => {
+    setInputError(false);
+    setTimeError(false);
+    setDayError(false);
+
+    console.log("Dates being compared: ");
+    console.log(start);
+    console.log(end);
+
+    // Invalid date state
+    if (
+      !(start instanceof Date && !isNaN(start)) ||
+      !(end instanceof Date && !isNaN(end))
+    ) {
+      setInputError(true);
+      return true;
+    }
+
+    const startDay = start.toISOString().split("T")[0];
+    const endDay = end.toISOString().split("T")[0];
+
+    // Check that start begins before the end - works
+    if (!(start < end)) {
+      console.log("checkDates: Start date is later than end date");
+      setTimeError(true);
+      return true;
+    }
+
+    // Check that the dates are on the same day - works
+    if (!(startDay === endDay)) {
+      setDayError(true);
+      return true;
+    }
+
+    // No errors: return false
+    return false;
+  };
+
   const handleAdd = async () => {
+    checkLogin();
     const starttime = new Date(starttimeForm);
     const endtime = new Date(endtimeForm);
     const response = await addShift(
-      auth.token,
+      userData?.token,
       selectedUser,
       starttime,
       endtime
@@ -107,10 +167,18 @@ export default function Manage() {
   };
 
   const handleEdit = async () => {
+    checkLogin();
+
     const starttime = new Date(startEdit);
     const endtime = new Date(endEdit);
+    const errors = checkDates(starttime, endtime);
+    if (errors) {
+      return false;
+    }
+
+    // Proceed if there are no errors
     const response = await updateShift(
-      auth.token,
+      userData?.token,
       selectedShiftId,
       starttime,
       endtime
@@ -120,10 +188,12 @@ export default function Manage() {
     }
 
     loadAllShifts();
+    return true;
   };
 
   const handleDelete = async () => {
-    const response = await deleteShift(auth.token, selectedShiftId);
+    checkLogin();
+    const response = await deleteShift(userData?.token, selectedShiftId);
     if (!response) {
       throw new Error("Shift.js - handleDelete: Could not delete shift");
     }
@@ -166,7 +236,7 @@ export default function Manage() {
       <DialogTitle id="add-shift-title">{"Add Shift"}</DialogTitle>
       <DialogContent>
         <FormControl>
-          <InputLabel htmlFor="age-select">Employee</InputLabel>
+          <InputLabel htmlFor="employee-select">Employee</InputLabel>
           <Select
             native
             value={selectedUser}
@@ -226,6 +296,7 @@ export default function Manage() {
         {/* Date Time Picker */}
         <form className={classes.container} noValidate>
           <TextField
+            required
             id="datetime-start"
             label="Start Time"
             type="datetime-local"
@@ -237,6 +308,7 @@ export default function Manage() {
             onChange={(event) => setStartEdit(event.target.value)}
           />
           <TextField
+            required
             id="datetime-end"
             label="End Time"
             type="datetime-local"
@@ -257,6 +329,21 @@ export default function Manage() {
           >
             <DeleteIcon />
           </IconButton>
+          {timeError && (
+            <Typography className={classes.error}>
+              Shift start time must be smaller than the end time
+            </Typography>
+          )}
+          {dayError && (
+            <Typography className={classes.error}>
+              Shift must start and end on the same day
+            </Typography>
+          )}
+          {inputError && (
+            <Typography className={classes.error}>
+              Invalid date(s) entered, please try again
+            </Typography>
+          )}
           <DialogActions>
             <Button
               onClick={() => setOpenEditCalendarDialog(false)}
@@ -266,8 +353,10 @@ export default function Manage() {
             </Button>
             <Button
               onClick={async () => {
-                setOpenEditCalendarDialog(false);
-                await handleEdit();
+                const performEdit = await handleEdit();
+                if (performEdit) {
+                  setOpenEditCalendarDialog(false);
+                }
               }}
               color="primary"
               autoFocus
@@ -334,7 +423,7 @@ export default function Manage() {
         setEndtimeForm(end);
         setOpenAddCalendarDialog(true);
       }}
-      onSelectEvent={(event, e) => {
+      onSelectEvent={(event) => {
         const { shiftId, title, start, end } = event;
 
         setEditDialogName(title);
