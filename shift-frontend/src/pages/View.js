@@ -1,6 +1,5 @@
 import React, { useEffect } from "react";
 import { getCurrentShifts } from "../network/index";
-import authContext from "../context/authContext";
 import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import format from "date-fns/format";
 import parse from "date-fns/parse";
@@ -39,9 +38,10 @@ export default function View() {
   const [shiftsPDF, setShiftsPDF] = React.useState(null);
 
   useEffect(() => {
+    console.log("UseEffect: Running...");
     (async () => {
       // Check that the user is logged in
-      const userData = JSON.parse(localStorage.getItem("userData"));
+      const userData = getUserData();
       if (!userData) {
         console.log("View: Not logged in");
         window.location.replace(`http://${window.location.host}/login`);
@@ -49,13 +49,14 @@ export default function View() {
       }
       // Get user's shifts
       const response = await getShifts();
-      console.log("getShifts Response: ");
-      console.log(response);
     })();
   }, []);
 
   const getShifts = async () => {
-    const userData = JSON.parse(localStorage.getItem("userData"));
+    const userData = getUserData();
+    if (!userData) {
+      console.error("NOT LOGGED IN?");
+    }
     const response = await getCurrentShifts(userData.token);
 
     if (!response) {
@@ -124,7 +125,12 @@ export default function View() {
 
   const producePDF = () => {
     console.log("Producing PDF...");
-    if (!shiftsPDF) return;
+    if (!shiftsPDF) {
+      console.error("producePDF: shiftsPDF does not exist, returning,...");
+      return;
+    } else {
+      console.info("producePDF: shiftsPDF DOES exist, running...");
+    }
 
     // Code
     const arrayOfShifts = [...shiftsPDF];
@@ -153,12 +159,12 @@ export default function View() {
 
         // Return PDF JSX element to represent date/time
         return (
-          <View>
+          <PDFView>
             <Text>{day}</Text>
             <Text>
               {timeStart} - {timeEnd}
             </Text>
-          </View>
+          </PDFView>
         );
       });
 
@@ -176,18 +182,24 @@ export default function View() {
   };
 
   const ShiftsPDF = () => <Document>{producePDF()}</Document>;
+  // const ShiftsPDF = () => <Document></Document>;
 
   return (
     <>
       <h1>My Schedule</h1>
       {shifts && MyCalendar}
-      {/* {shiftsPDF && (
+      {/* <PDFDownloadLink document={<ShiftsPDF />} fileName="somename.pdf">
+        {({ blob, url, loading, error }) =>
+          loading ? "Loading document..." : "Download now!"
+        }
+      </PDFDownloadLink> */}
+      {shiftsPDF && (
         <PDFDownloadLink document={<ShiftsPDF />} fileName="somename.pdf">
           {({ blob, url, loading, error }) =>
             loading ? "Loading document..." : "Download now!"
           }
         </PDFDownloadLink>
-      )} */}
+      )}
     </>
   );
 }
