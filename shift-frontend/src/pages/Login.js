@@ -7,21 +7,44 @@ import { Redirect } from "react-router-dom";
 
 const useStyles = makeStyles({
   root: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
     color: "white",
     backgroundColor: "#4a4e69",
     border: "1px solid #c7c7c7",
     borderRadius: "10px",
-    //  margin: "auto",
-    //  margin: "0 auto",
     width: "50%",
-    margin: "300px auto",
+    margin: "100px auto",
     padding: "70px",
   },
-  input: {
+  inputRoot: {
     color: "white",
+    display: "flex",
+    margin: "30px 0",
+  },
+  inputLabel: {
+    color: "white",
+  },
+  buttonContainer: {
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    margin: "30px 0",
   },
   button: {
     color: "white",
+    padding: "10px 60px",
+  },
+  form: {
+    width: "100%",
+    maxWidth: "500px",
+  },
+  heading: {
+    fontSize: "40px",
+    display: "flex",
+    textAlign: "center",
+    margin: "30px 0",
   },
 });
 
@@ -34,8 +57,6 @@ export default function Login() {
 
   const [emailInputError, setEmailInputError] = useState(false);
   const [passwordInputError, setPasswordInputError] = useState(false);
-
-  const [canSubmit, setCanSubmit] = useState(false);
 
   const [loginError, setLoginError] = useState(false);
 
@@ -65,11 +86,13 @@ export default function Login() {
     const emailValid = checkValidEmail(email);
     if (!emailValid) {
       setEmailInputError(true);
+      return;
     }
 
     const passwordValid = checkValidPassword(password);
     if (!passwordValid) {
       setPasswordInputError(true);
+      return;
     }
 
     if (emailInputError || passwordInputError) {
@@ -98,58 +121,81 @@ export default function Login() {
   }
   return (
     <Box className={classes.root}>
-      <Typography variant="h2">Login</Typography>
-      <form>
-        <TextField
-          classes={{
-            root: classes.input,
+      <Box>
+        <Typography variant="h1" className={classes.heading}>
+          Shift Management App
+        </Typography>
+      </Box>
+      <Box>
+        <Typography
+          variant="h2"
+          style={{
+            fontSize: "30px",
+            margin: "20px 0",
           }}
-          id="email"
-          label="Email"
-          variant="outlined"
-          InputProps={{
-            className: classes.input,
-          }}
-          InputLabelProps={{
-            className: classes.input,
-          }}
-          value={email}
-          error={emailInputError}
-          helperText={emailInputError && "Please enter a valid email address"}
-          onChange={(event) => setEmail(event.target.value)}
-        />
-        <TextField
-          className={classes.input}
-          InputProps={{
-            className: classes.input,
-          }}
-          InputLabelProps={{
-            className: classes.input,
-          }}
-          id="password"
-          type="password"
-          label="Password"
-          variant="outlined"
-          value={password}
-          error={passwordInputError}
-          helperText={
-            passwordInputError &&
-            "Please enter a password with at least six characters"
-          }
-          onChange={(event) => setPassword(event.target.value)}
-        />
-        <Button
-          variant="outlined"
-          color="primary"
-          className={classes.button}
-          onClick={() => handleLogin()}
         >
-          Login
-        </Button>
+          Login 👋🏼
+        </Typography>
+      </Box>
+      <form className={classes.form}>
+        <Box>
+          <TextField
+            classes={{
+              root: classes.inputRoot,
+            }}
+            InputLabelProps={{
+              className: classes.inputLabel,
+            }}
+            id="email"
+            label="Email"
+            variant="outlined"
+            value={email}
+            error={emailInputError}
+            helperText={emailInputError && "Please enter a valid email address"}
+            onChange={(event) => setEmail(event.target.value)}
+          />
+        </Box>
+        <Box>
+          <TextField
+            classes={{
+              root: classes.inputRoot,
+            }}
+            InputLabelProps={{
+              className: classes.inputLabel,
+            }}
+            id="password"
+            type="password"
+            label="Password"
+            variant="outlined"
+            value={password}
+            error={passwordInputError}
+            helperText={
+              passwordInputError &&
+              "Please enter a password with at least six characters"
+            }
+            onChange={(event) => setPassword(event.target.value)}
+          />
+        </Box>
+        {loginError ? (
+          <Typography
+            style={{
+              color: "#f44336",
+            }}
+          >
+            Login credentials incorrect - please try again
+          </Typography>
+        ) : null}
+        <Box className={classes.buttonContainer}>
+          <Button
+            variant="contained"
+            color="primary"
+            className={classes.button}
+            onClick={() => handleLogin()}
+          >
+            Login
+          </Button>
+        </Box>
       </form>
-      {loginError ? (
-        <Typography>Login credentials incorrect - please try again</Typography>
-      ) : null}
     </Box>
   );
 }
