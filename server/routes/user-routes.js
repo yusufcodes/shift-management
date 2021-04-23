@@ -15,6 +15,13 @@ router.post(
   ],
   userController.signup
 );
+
+// todo: add auth
+router.patch(
+  "/update/:uid",
+  [check("email").normalizeEmail().isEmail()],
+  userController.updateDetails
+);
 router.post("/login", userController.login);
 
 module.exports = router;

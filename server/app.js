@@ -15,6 +15,7 @@ const userRouter = require("./routes/user-routes");
 the next middleware */
 app.use(bodyParser.json());
 
+/* Setting headers on any response */
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(

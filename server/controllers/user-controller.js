@@ -8,7 +8,7 @@ const jwt = require("jsonwebtoken");
 
 const generateToken = (userId, name, email, admin) => {
   let token;
-  // Create a new token
+
   try {
     token = jwt.sign(
       {
@@ -155,17 +155,72 @@ const login = async (req, res, next) => {
     existing.admin
   );
 
-  res
-    .status(201)
-    .json({
-      userId: existing.id,
-      email: existing.email,
-      name: existing.name,
-      admin: existing.admin,
-      token,
-    });
+  res.status(201).json({
+    userId: existing.id,
+    email: existing.email,
+    name: existing.name,
+    admin: existing.admin,
+    token,
+  });
+};
+
+const updateDetails = async (req, res, next) => {
+  const errors = validationResult(req);
+
+  if (!errors.isEmpty()) {
+    const error = new HttpError("Invalid inputs, please check your data", 422);
+    return next(error);
+  }
+
+  const { email = null, password = null } = req.body;
+
+  if (!email) {
+    const error = new HttpError(
+      "Please enter an email to update this user with",
+      422
+    );
+    return next(error);
+  }
+
+  if (password) {
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(password, 12);
+    } catch (err) {
+      const error = new HttpError(
+        "Couldnt not create a user, please try again",
+        500
+      );
+      return next(error);
+    }
+
+    await User.findByIdAndUpdate(
+      req.params.uid,
+      { email, password: hashedPassword },
+      function (err, docs) {
+        if (err) {
+          console.log(err);
+        } else {
+          console.log("Updated User Email and Password : ", docs);
+        }
+      }
+    );
+
+    return res.status(201).json({ success: "User updated - email and pass" });
+  }
+
+  await User.findByIdAndUpdate(req.params.uid, { email }, function (err, docs) {
+    if (err) {
+      console.log(err);
+    } else {
+      console.log("Updated User : ", docs);
+    }
+  });
+
+  res.status(201).json({ success: "User updated" });
 };
 
 exports.getUsers = getUsers;
 exports.signup = signup;
 exports.login = login;
+exports.updateDetails = updateDetails;

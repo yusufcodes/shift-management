@@ -9,7 +9,7 @@ const userSchema = new Schema({
   email: { type: "string", required: true, unique: true },
   password: { type: "string", required: true, minlength: 6 },
   admin: { type: "Boolean", required: true },
-  shifts: [{ type: mongoose.Types.ObjectId, required: true, ref: "User" }],
+  shifts: [{ type: mongoose.Types.ObjectId, required: true, ref: "Shift" }],
 });
 
 userSchema.plugin(uniqueValidator);

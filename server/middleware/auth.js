@@ -9,22 +9,26 @@ module.exports = (req, res, next) => {
     return next();
   }
 
-  const token = req.headers["x-authorization"];
-  const decoded = jwt.verify(token, process.env.SECRET);
-  console.log(decoded);
-  req.userData = { userId: decoded.userId };
+  try {
+    const token = req.headers["x-authorization"];
+    if (!token) {
+      const error = new HttpError("Authentication failed", 401);
+      return next(error);
+    }
+    const decoded = jwt.verify(token, process.env.SECRET);
 
-  next();
+    if (!decoded.admin) {
+      const error = new HttpError(
+        "Authentication failed - no admin privileges",
+        401
+      );
+      return next(error);
+    }
 
-  if (!token) {
+    req.userData = { userId: decoded.userId };
+    next();
+  } catch (err) {
     const error = new HttpError("Authentication failed", 401);
-    return next(error);
-  }
-  if (!decoded.admin) {
-    const error = new HttpError(
-      "Authentication failed - no admin privileges",
-      401
-    );
     return next(error);
   }
 };

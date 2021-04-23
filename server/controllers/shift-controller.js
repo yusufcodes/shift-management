@@ -6,6 +6,7 @@ const User = require("../models/user");
 
 // GET: Return a shift based on its ID
 const getShiftById = async ({ params }, res, next) => {
+  console.log("Running getShiftById...");
   const shiftId = params.sid;
 
   let shift;
@@ -224,6 +225,9 @@ const createShift = async (req, res, next) => {
 
 // PATCH: Update fields of any Shift
 const updateShift = async (req, res, next) => {
+  console.log("Running updateShift...");
+  console.log(req.params.sid);
+
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     throw new HttpError("Invalid inputs, please check your data", 422);
@@ -309,10 +313,10 @@ const deleteShift = async (req, res, next) => {
   res.status(200).json({ message: `Deleted shift with ID ${shiftId}` });
 };
 
+exports.getAllShifts = getAllShifts;
 exports.getShiftsByUserId = getShiftsByUserId;
 exports.getShiftById = getShiftById;
 exports.getCurrentShifts = getCurrentShifts;
 exports.createShift = createShift;
 exports.updateShift = updateShift;
 exports.deleteShift = deleteShift;
-exports.getAllShifts = getAllShifts;
