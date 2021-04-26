@@ -2,6 +2,7 @@ const express = require("express");
 const { check } = require("express-validator");
 
 const userController = require("../controllers/user-controller");
+const checkAuthUser = require("../middleware/authUser");
 
 const router = express.Router();
 
@@ -15,13 +16,13 @@ router.post(
   ],
   userController.signup
 );
+router.post("/login", userController.login);
 
-// todo: add auth
+router.use(checkAuthUser);
 router.patch(
   "/update/:uid",
   [check("email").normalizeEmail().isEmail()],
   userController.updateDetails
 );
-router.post("/login", userController.login);
 
 module.exports = router;
