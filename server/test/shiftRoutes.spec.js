@@ -96,6 +96,7 @@ describe("=== Shift Router Tests ===", () => {
   // Update Shift
   it(`Update the shift with ID passed in and return a JSON with updated shift details`, (done, res) => {
     const currentDate = new Date();
+    console.log(newShiftId);
     request(app)
       .patch(`/api/shift/${newShiftId}`)
       .set("Accept", "application/json")
