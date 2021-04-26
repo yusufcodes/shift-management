@@ -1,5 +1,4 @@
 const request = require("supertest");
-const should = require("should");
 const app = require("../app");
 const { expect } = require("chai");
 
@@ -48,12 +47,28 @@ describe("=== Shift Router Tests ===", () => {
       .expect(200, done);
   });
 
+  it("responds with a 404 error due to invalid shift id being passed in", (done, res) => {
+    request(app)
+      .get("/api/shift/id/39483")
+      .set("Accept", "application/json")
+      .expect("Content-Type", /json/)
+      .expect(404, done);
+  });
+
   it("responds with json containing an array of Shift objects, for the given user ID", (done, res) => {
     request(app)
       .get("/api/shift/user/60588ead8d1e500da43fb515")
       .set("Accept", "application/json")
       .expect("Content-Type", /json/)
       .expect(200, done);
+  });
+
+  it("returns a 404 error due to invalid user ID being passed in", (done, res) => {
+    request(app)
+      .get("/api/shift/user/3994492")
+      .set("Accept", "application/json")
+      .expect("Content-Type", /json/)
+      .expect(404, done);
   });
 
   // === Authenticated Routes: Non Admin ===
@@ -66,10 +81,18 @@ describe("=== Shift Router Tests ===", () => {
       .expect(200, done);
   });
 
+  it("responds with 401 when getting current users shifts without auth token", (done, res) => {
+    request(app)
+      .get("/api/shift/current")
+      .set("Accept", "application/json")
+      .expect("Content-Type", /json/)
+      .expect(401, done);
+  });
+
   let newShiftId;
 
   // === Authenticated Routes: Admin ===
-  // Create Shift
+  // Create Shift: valid inputs
   it("responds with json containing new shift, starting and ending at the same time, for user with ID 60588ead8d1e500da43fb515", (done, res) => {
     const currentDate = new Date();
     request(app)
@@ -93,10 +116,40 @@ describe("=== Shift Router Tests ===", () => {
       });
   });
 
-  // Update Shift
+  // Create Shift: invalid user ID supplied
+  it("responds with a 404 when trying to create a new shift with an incorrect user id", (done, res) => {
+    const currentDate = new Date();
+    request(app)
+      .post("/api/shift/")
+      .set("Accept", "application/json")
+      .set("X-Authorization", token)
+      .send({
+        starttime: currentDate,
+        endtime: currentDate,
+        employeeId: "3333",
+      })
+      .expect("Content-Type", /json/)
+      .expect(404, done);
+  });
+
+  // Create Shift: missing body information
+  it("responds with a 422 when trying to create a new shift with a missing data field", (done, res) => {
+    const currentDate = new Date();
+    request(app)
+      .post("/api/shift/")
+      .set("Accept", "application/json")
+      .set("X-Authorization", token)
+      .send({
+        starttime: currentDate,
+        employeeId: "60588ead8d1e500da43fb515",
+      })
+      .expect("Content-Type", /json/)
+      .expect(422, done);
+  });
+
+  // Update Shift: successful updating of a shift
   it(`Update the shift with ID passed in and return a JSON with updated shift details`, (done, res) => {
     const currentDate = new Date();
-    console.log(newShiftId);
     request(app)
       .patch(`/api/shift/${newShiftId}`)
       .set("Accept", "application/json")
@@ -114,7 +167,36 @@ describe("=== Shift Router Tests ===", () => {
       });
   });
 
-  // Delete Shift
+  // Update Shift: invalid shift ID
+  it(`return a 404 error when updating shift with invalid ID`, (done, res) => {
+    const currentDate = new Date();
+    request(app)
+      .patch(`/api/shift/6085fb573712661894f5e883`)
+      .set("Accept", "application/json")
+      .set("X-Authorization", token)
+      .send({
+        starttime: currentDate,
+        endtime: currentDate,
+      })
+      .expect("Content-Type", /json/)
+      .expect(404, done);
+  });
+
+  // Update Shift: invalid inout
+  it(`return a 422 error when updating shift with invalid input (missing endtime to shift)`, (done, res) => {
+    const currentDate = new Date();
+    request(app)
+      .patch(`/api/shift/6085fb573712661894f5e883`)
+      .set("Accept", "application/json")
+      .set("X-Authorization", token)
+      .send({
+        starttime: currentDate,
+      })
+      .expect("Content-Type", /json/)
+      .expect(422, done);
+  });
+
+  // Delete Shift: successfully delete shift
   it(`Delete the shift with ID passed in and return OK status`, (done, res) => {
     request(app)
       .delete(`/api/shift/${newShiftId}`)
@@ -122,5 +204,15 @@ describe("=== Shift Router Tests ===", () => {
       .set("X-Authorization", token)
       .expect("Content-Type", /json/)
       .expect(200, done);
+  });
+
+  // Delete Shift: invalid shift ID
+  it(`Delete the shift with ID passed in and return OK status`, (done, res) => {
+    request(app)
+      .delete(`/api/shift/6085fb573712661894f5e883`)
+      .set("Accept", "application/json")
+      .set("X-Authorization", token)
+      .expect("Content-Type", /json/)
+      .expect(404, done);
   });
 });
