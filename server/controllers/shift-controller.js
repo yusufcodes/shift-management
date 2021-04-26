@@ -14,16 +14,8 @@ const getShiftById = async ({ params }, res, next) => {
   try {
     shift = await Shift.findById(shiftId);
   } catch (err) {
-    const error = new HttpError(
-      "Database: Issue with getting shift by this ID",
-      500
-    );
+    const error = new HttpError("Could not find shift with given ID", 404);
     return next(error); // Stop code execution
-  }
-
-  if (!shift) {
-    const error = new HttpError("Couldnt find shift by ID", 500);
-    return next(error);
   }
 
   res.json({ shift: shift.toObject({ getters: true }) });
@@ -68,15 +60,7 @@ const getShiftsByUserId = async ({ params }, res, next) => {
     userShifts = await Shift.find({ employeeId: employeeId }).sort("starttime");
   } catch (err) {
     const error = new HttpError(
-      "Database: Issue with getting shifts for this user",
-      500
-    );
-    return next(error);
-  }
-
-  if (!userShifts || userShifts.length === 0) {
-    const error = new HttpError(
-      "Could not find shifts for the provided user ID",
+      "Could not find shifts for the given User ID",
       404
     );
     return next(error);
@@ -166,17 +150,15 @@ const getCurrentShifts = async (req, res, next) => {
 
 // POST: Add a new 'Shift' to the database
 const createShift = async (req, res, next) => {
-  console.log("Running createShift");
-
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError("Invalid inputs, please check your data", 422);
+    const error = new HttpError("Invalid inputs, please check your data", 422);
+    return next(error);
   }
 
   const { starttime, endtime, employeeId } = req.body;
   console.log(starttime, endtime, employeeId);
 
-  // TODO: Once I create Date selection on front end, pass this in here - currently just uses current date.
   const createdShift = new Shift({
     starttime,
     endtime,
@@ -189,13 +171,10 @@ const createShift = async (req, res, next) => {
   try {
     user = await User.findById(employeeId);
   } catch (err) {
-    const error = new HttpError("Creating shift failed", 500);
-    return next(error);
-  }
-  if (!user) {
     const error = new HttpError("Could not find user with given ID", 404);
     return next(error);
   }
+
   /*
   - Run multiple operations independently but if one fails, undo all operations.
     - Sessions: Start a session, initiate the transaction, and once the transaction is successful,
@@ -225,15 +204,25 @@ const createShift = async (req, res, next) => {
 
 // PATCH: Update fields of any Shift
 const updateShift = async (req, res, next) => {
-  console.log("Running updateShift...");
-  console.log(req.params.sid);
-
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    throw new HttpError("Invalid inputs, please check your data", 422);
+    const error = new HttpError("Invalid inputs, please check your data", 422);
+    return next(error);
   }
 
+  let getShift;
+
   const shiftId = mongoose.Types.ObjectId(req.params.sid);
+  try {
+    getShift = await Shift.findOne({ _id: shiftId });
+  } catch (err) {
+    const error = new HttpError(
+      "Invalid shift ID supplied, please supply an existing shift ID",
+      422
+    );
+    return next(error);
+  }
+
   const { starttime, endtime } = req.body;
 
   let updatedShift;
