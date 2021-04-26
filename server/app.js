@@ -55,7 +55,9 @@ mongoose
     `mongodb+srv://${process.env.MONGO_USERNAME}:${process.env.MONGO_PASSWORD}@${process.env.MONGO_CLUSTER}/${process.env.MONGO_DBNAME}?retryWrites=true&w=majority`
   )
   .then(() => {
+    console.log("Loading server...");
     app.listen(5000);
+    console.log("Server running at http://www.localhost:5000");
   })
   .catch((err) => console.log(err));
 

@@ -95,12 +95,9 @@ const signup = async (req, res, next) => {
     shifts: [],
   });
 
-  console.log(newUser);
-
   try {
     await newUser.save();
   } catch (err) {
-    console.log(err);
     const error = new HttpError("Sign up failed, please try again", 500);
     return next(error); // Stop code execution
   }
@@ -255,9 +252,7 @@ const updateDetails = async (req, res, next) => {
       { new: true },
       function (err, docs) {
         if (err) {
-          console.log(err);
-        } else {
-          console.log("Updated User Email and Password : ", docs);
+          return next(err);
         }
       }
     );
@@ -278,9 +273,7 @@ const updateDetails = async (req, res, next) => {
     { new: true },
     function (err, docs) {
       if (err) {
-        console.log(err);
-      } else {
-        console.log("Updated User : ", docs);
+        return next(err);
       }
     }
   );

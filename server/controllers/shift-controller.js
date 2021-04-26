@@ -6,7 +6,6 @@ const User = require("../models/user");
 
 // GET: Return a shift based on its ID
 const getShiftById = async ({ params }, res, next) => {
-  console.log("Running getShiftById...");
   const shiftId = params.sid;
 
   let shift;
@@ -73,10 +72,6 @@ const getShiftsByUserId = async ({ params }, res, next) => {
 };
 
 const getCurrentShifts = async (req, res, next) => {
-  console.log("Running getCurrentShifts...");
-  // TODO: check this actually returns what I expect
-  // console.log(req);
-
   const employeeId = req.userData.userId;
   const { month, week } = req.query;
 
@@ -157,7 +152,6 @@ const createShift = async (req, res, next) => {
   }
 
   const { starttime, endtime, employeeId } = req.body;
-  console.log(starttime, endtime, employeeId);
 
   const createdShift = new Shift({
     starttime,
@@ -253,8 +247,6 @@ const updateShift = async (req, res, next) => {
 // DELETE: Remove a shift from the database
 const deleteShift = async (req, res, next) => {
   const shiftId = mongoose.Types.ObjectId(req.params.sid);
-  console.log("Shift ID to be removed: ");
-  console.log(shiftId);
 
   let shift;
 
