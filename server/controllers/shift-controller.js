@@ -55,7 +55,7 @@ const getAllShifts = async (req, res, next) => {
     }
   );
 
-  res.json({ allShifts: transformedShifts });
+  res.status(200).json({ allShifts: transformedShifts });
 };
 
 // GET: Return 0 or more shifts associated with Employee
@@ -295,7 +295,8 @@ const deleteShift = async (req, res, next) => {
     sess.startTransaction();
 
     // 1. Remove the shift
-    await shift.remove({ session: sess });
+    // TEST (remove)
+    await shift.deleteOne({ session: sess });
 
     // 2. Remove the shift from the employeeId
     shift.employeeId.shifts.pull(shift); // ID removed by pull

@@ -4,6 +4,9 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 mongoose.set("useCreateIndex", true); // prevent deprecation warnings from MonogDB driver
+mongoose.set("useNewUrlParser", true);
+mongoose.set("useFindAndModify", false);
+mongoose.set("useUnifiedTopology", true);
 
 const bodyParser = require("body-parser");
 const HttpError = require("./models/http-error");
@@ -55,3 +58,5 @@ mongoose
     app.listen(5000);
   })
   .catch((err) => console.log(err));
+
+module.exports = app;

@@ -172,7 +172,9 @@ const updateDetails = async (req, res, next) => {
     return next(error);
   }
 
-  const { email = null, password = null } = req.body;
+  const { email = null, currentPassword = null, newPassword = null } = req.body;
+
+  const userId = req.params.uid;
 
   if (!email) {
     const error = new HttpError(
@@ -182,21 +184,58 @@ const updateDetails = async (req, res, next) => {
     return next(error);
   }
 
-  if (password) {
-    let hashedPassword;
+  if (currentPassword && newPassword) {
+    let user;
+
     try {
-      hashedPassword = await bcrypt.hash(password, 12);
+      user = await User.findOne({ _id: userId });
+    } catch (err) {
+      const error = new HttpError("Updating details failed, try again", 500);
+      return next(error);
+    }
+
+    if (!user) {
+      const error = new HttpError("Updating details failed, try again", 401);
+      return next(error);
+    }
+
+    let passwordValid = false;
+
+    try {
+      passwordValid = await bcrypt.compare(currentPassword, user.password);
     } catch (err) {
       const error = new HttpError(
-        "Couldnt not create a user, please try again",
+        "Invalid credentials supplied, check credentials and try again",
         500
       );
       return next(error);
     }
 
-    await User.findByIdAndUpdate(
+    if (!passwordValid) {
+      const error = new HttpError(
+        "Invalid credentials supplied, check credentials and try again",
+        401
+      );
+      return next(error);
+    }
+
+    console.log(" *** Success: current entered password matches to database");
+
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(newPassword, 12);
+    } catch (err) {
+      const error = new HttpError("Couldnt update user, please try again", 500);
+      return next(error);
+    }
+
+    let userReturn;
+
+    // Updating email and password
+    userReturn = await User.findByIdAndUpdate(
       req.params.uid,
       { email, password: hashedPassword },
+      { new: true },
       function (err, docs) {
         if (err) {
           console.log(err);
@@ -206,18 +245,30 @@ const updateDetails = async (req, res, next) => {
       }
     );
 
-    return res.status(201).json({ success: "User updated - email and pass" });
+    userReturn.password = null;
+
+    delete userReturn.password;
+
+    return res
+      .status(201)
+      .json({ success: "User updated - email and pass", userReturn });
   }
 
-  await User.findByIdAndUpdate(req.params.uid, { email }, function (err, docs) {
-    if (err) {
-      console.log(err);
-    } else {
-      console.log("Updated User : ", docs);
+  // Upading only email
+  let userReturn = await User.findByIdAndUpdate(
+    req.params.uid,
+    { email },
+    { new: true },
+    function (err, docs) {
+      if (err) {
+        console.log(err);
+      } else {
+        console.log("Updated User : ", docs);
+      }
     }
-  });
+  );
 
-  res.status(201).json({ success: "User updated" });
+  res.status(201).json({ success: "User updated", userReturn });
 };
 
 exports.getUsers = getUsers;
