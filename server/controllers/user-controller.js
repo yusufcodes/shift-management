@@ -48,13 +48,15 @@ const getUsers = async (req, res, next) => {
 // POST: Add a new user to the database
 const signup = async (req, res, next) => {
   const errors = validationResult(req);
-  // TODO: Make error message more specific?
   if (!errors.isEmpty()) {
     const error = new HttpError("Invalid inputs, please check your data", 422);
     return next(error);
   }
 
-  const { name, email, password, admin } = req.body;
+  let { name, email, password, admin } = req.body;
+  if (!admin) {
+    admin = false;
+  }
 
   let existing;
 
@@ -112,6 +114,11 @@ const signup = async (req, res, next) => {
 
 // POST: Use login details to sign user into account
 const login = async (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const error = new HttpError("Invalid inputs, please check your data", 422);
+    return next(error);
+  }
   const { email, password } = req.body;
 
   let existing;
@@ -174,18 +181,28 @@ const updateDetails = async (req, res, next) => {
 
   const { email = null, currentPassword = null, newPassword = null } = req.body;
 
-  const userId = req.params.uid;
-
-  if (!email) {
+  // Check if all inputs are actually null
+  if (!email && !currentPassword && !newPassword) {
     const error = new HttpError(
-      "Please enter an email to update this user with",
+      "No inputs passed in, please pass in required information",
       422
     );
     return next(error);
   }
 
+  const userId = req.params.uid;
+
+  // if (!email) {
+  //   const error = new HttpError(
+  //     "Please enter an email to update this user with",
+  //     422
+  //   );
+  //   return next(error);
+  // }
+
   if (currentPassword && newPassword) {
     let user;
+    let email;
 
     try {
       user = await User.findOne({ _id: userId });
@@ -198,6 +215,8 @@ const updateDetails = async (req, res, next) => {
       const error = new HttpError("Updating details failed, try again", 401);
       return next(error);
     }
+
+    email = user.email;
 
     let passwordValid = false;
 
@@ -218,8 +237,6 @@ const updateDetails = async (req, res, next) => {
       );
       return next(error);
     }
-
-    console.log(" *** Success: current entered password matches to database");
 
     let hashedPassword;
     try {

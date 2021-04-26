@@ -12,24 +12,6 @@ expect: check return values, header and body
 check that the status is 200, and then end the test by calling the done callback.
 */
 describe("=== Shift Router Tests ===", () => {
-  let token;
-
-  // Perform login with existing user to store valid token
-  // This is to be used when testing authenticated routes
-  before((done) => {
-    request(app)
-      .post("/api/user/login")
-      .send({
-        email: "mark123@gmail.com",
-        password: "password123",
-      })
-      .end(function (err, res) {
-        if (err) throw err;
-        token = res.body.token;
-        done();
-      });
-  });
-
   // === Unauthenticated Routes ===
   it("responds with json containing all of the shifts", (done, res) => {
     request(app)
@@ -69,6 +51,24 @@ describe("=== Shift Router Tests ===", () => {
       .set("Accept", "application/json")
       .expect("Content-Type", /json/)
       .expect(404, done);
+  });
+
+  let token;
+
+  // Perform login with existing user to store valid token
+  // This is to be used when testing authenticated routes
+  beforeEach((done) => {
+    request(app)
+      .post("/api/user/login")
+      .send({
+        email: "mark123@gmail.com",
+        password: "password1234",
+      })
+      .end(function (err, res) {
+        if (err) throw err;
+        token = res.body.token;
+        done();
+      });
   });
 
   // === Authenticated Routes: Non Admin ===
@@ -182,7 +182,7 @@ describe("=== Shift Router Tests ===", () => {
       .expect(404, done);
   });
 
-  // Update Shift: invalid inout
+  // Update Shift: invalid input
   it(`return a 422 error when updating shift with invalid input (missing endtime to shift)`, (done, res) => {
     const currentDate = new Date();
     request(app)

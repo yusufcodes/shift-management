@@ -16,7 +16,11 @@ router.post(
   ],
   userController.signup
 );
-router.post("/login", userController.login);
+router.post(
+  "/login",
+  [check("email").not().isEmpty(), check("password").not().isEmpty()],
+  userController.login
+);
 
 router.use(checkAuthUser);
 router.patch(
