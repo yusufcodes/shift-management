@@ -4,7 +4,6 @@ import { IconButton, Grid, TextField, Typography } from "@material-ui/core";
 import DeleteIcon from "@material-ui/icons/Delete";
 import { deleteShift, updateShift } from "../../network/index";
 import authContext from "../../context/authContext";
-import CustomDialog from "../global/CustomDialog";
 import Button from "@material-ui/core/Button";
 import EditIcon from "@material-ui/icons/Edit";
 import Dialog from "@material-ui/core/Dialog";

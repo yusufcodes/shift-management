@@ -32,11 +32,20 @@ import format from "date-fns/format";
 import parse from "date-fns/parse";
 import startOfWeek from "date-fns/startOfWeek";
 import getDay from "date-fns/getDay";
+import Snackbar from "../components/global/Snackbar";
 const locales = {
   "en-US": require("date-fns/locale/en-US"),
 };
 
 const useStyles = makeStyles((theme) => ({
+  root: {
+    width: "80%",
+    margin: "0 auto",
+  },
+  header: {
+    margin: "45px 0",
+  },
+
   container: {
     display: "flex",
     flexWrap: "wrap",
@@ -53,6 +62,19 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Manage() {
   const [userData, setUserData] = useState(null);
+  const [addSuccess, setAddSuccess] = useState({
+    open: false,
+    message: "Success - shift has been added",
+  });
+  const [editSuccess, setEditSuccess] = useState({
+    open: false,
+    message: "Success - shift has been edited",
+  });
+  const [deleteSuccess, setDeleteSuccess] = useState({
+    open: false,
+    message: "Success - shift has been deleted",
+  });
+  const [error, setError] = useState(false);
 
   const checkLogin = () => {
     const userData = getUserData();
@@ -60,6 +82,10 @@ export default function Manage() {
       console.log("Manage: NOT LOGGED IN - REDIRECT");
       window.location.replace(`http://${window.location.host}/login`);
       return;
+    }
+    if (!userData.isAdmin) {
+      console.log("Manage: User is not an admin - Redirect to view");
+      window.location.replace(`http://${window.location.host}/dashboard/view`);
     }
     setUserData(userData);
   };
@@ -94,10 +120,31 @@ export default function Manage() {
 
   const classes = useStyles();
 
+  const resetSnackbarStates = () => {
+    setAddSuccess((prevState) => ({
+      ...prevState,
+      open: false,
+    }));
+    setEditSuccess((prevState) => ({
+      ...prevState,
+      open: false,
+    }));
+    setDeleteSuccess((prevState) => ({
+      ...prevState,
+      open: false,
+    }));
+    setError(false);
+  };
+
   const loadAllShifts = async () => {
     checkLogin();
     const response = await getAllShifts(userData?.token);
     if (!response) {
+      setError(true);
+      return;
+    }
+    if (response.status !== 200) {
+      setError(true);
       return;
     }
     const allEvents = response.data.allShifts.map((item) => {
@@ -163,6 +210,7 @@ export default function Manage() {
 
   const handleAdd = async () => {
     checkLogin();
+    resetSnackbarStates();
     const starttime = new Date(starttimeForm);
     const endtime = new Date(endtimeForm);
     const response = await addShift(
@@ -172,15 +220,24 @@ export default function Manage() {
       endtime
     );
     if (!response) {
-      throw new Error("Manage.js - handleAdd: Could not add new shift");
+      setError(true);
+      return;
     }
-
+    if (response.status !== 201) {
+      setError(true);
+      return;
+    }
+    setOpenAddCalendarDialog(false);
     loadAllShifts();
+    setAddSuccess((prevState) => ({
+      ...prevState,
+      open: true,
+    }));
   };
 
   const handleEdit = async () => {
     checkLogin();
-
+    resetSnackbarStates();
     const starttime = new Date(startEdit);
     const endtime = new Date(endEdit);
     const errors = checkDates(starttime, endtime);
@@ -196,19 +253,42 @@ export default function Manage() {
       endtime
     );
     if (!response) {
-      throw new Error("Manage.js - handleAdd: Could not edit shift");
+      setError(true);
+      return;
+    }
+    if (response.status !== 200) {
+      setError(true);
+      return;
     }
 
     loadAllShifts();
+    setEditSuccess((prevState) => ({
+      ...prevState,
+      open: true,
+    }));
     return true;
   };
 
   const handleDelete = async () => {
     checkLogin();
+    resetSnackbarStates();
     const response = await deleteShift(userData?.token, selectedShiftId);
     if (!response) {
-      throw new Error("Shift.js - handleDelete: Could not delete shift");
+      setError(true);
+      return;
     }
+    if (response.status !== 200) {
+      setError(true);
+      return;
+    }
+
+    setDeleteSuccess((prevState) => ({
+      ...prevState,
+      open: true,
+    }));
+
+    setOpenDeleteDialog(false);
+    setOpenEditCalendarDialog(false);
 
     loadAllShifts();
   };
@@ -217,9 +297,15 @@ export default function Manage() {
   useEffect(() => {
     (async () => {
       const response = await getUsers();
-      if (!response || response.status !== 200) {
-        throw new Error("Manage.js: Could not get all users");
+      if (!response) {
+        setError(true);
+        return;
       }
+      if (response.status !== 200) {
+        setError(true);
+        return;
+      }
+
       const userOptions = response.data.users.map((item) => {
         return (
           <option value={item.id} key={item.id}>
@@ -246,7 +332,11 @@ export default function Manage() {
       aria-describedby="add-shift-dialog-description"
     >
       <DialogTitle id="add-shift-title">{"Add Shift"}</DialogTitle>
+
       <DialogContent>
+        <DialogContentText>
+          Select an employee to create this new shift for:
+        </DialogContentText>
         <FormControl>
           <InputLabel htmlFor="employee-select">Employee</InputLabel>
           <Select
@@ -281,7 +371,6 @@ export default function Manage() {
               </Button>
               <Button
                 onClick={async () => {
-                  setOpenAddCalendarDialog(false);
                   await handleAdd();
                 }}
                 color="primary"
@@ -409,8 +498,6 @@ export default function Manage() {
           </Button>
           <Button
             onClick={async () => {
-              setOpenDeleteDialog(false);
-              setOpenEditCalendarDialog(false);
               await handleDelete();
             }}
             color="primary"
@@ -457,20 +544,57 @@ export default function Manage() {
       scrollToTime={new Date(1970, 1, 1, 6)}
       startAccessor="start"
       endAccessor="end"
-      style={{ height: 500 }}
+      style={{ height: 700 }}
       step={60}
     />
   );
 
   return (
-    <>
-      <Grid>
-        <Typography variant="h4">Manage Shifts</Typography>
-        {allShifts && MyCalendar}
-        {AddShiftCalendar}
-        {EditShiftCalendar}
-        {DeleteShiftDialog}
-      </Grid>
-    </>
+    <Grid className={classes.root}>
+      <h1 className={classes.header}>Manage Shifts</h1>
+      {allShifts && MyCalendar}
+      {AddShiftCalendar}
+      {EditShiftCalendar}
+      {DeleteShiftDialog}
+      <Snackbar
+        open={addSuccess.open}
+        onClose={() =>
+          setAddSuccess((prevState) => ({
+            ...prevState,
+            open: false,
+          }))
+        }
+        message={addSuccess.message}
+        type="success"
+      />
+      <Snackbar
+        open={editSuccess.open}
+        onClose={() =>
+          setEditSuccess((prevState) => ({
+            ...prevState,
+            open: false,
+          }))
+        }
+        message={editSuccess.message}
+        type="success"
+      />
+      <Snackbar
+        open={deleteSuccess.open}
+        onClose={() =>
+          setDeleteSuccess((prevState) => ({
+            ...prevState,
+            open: false,
+          }))
+        }
+        message={deleteSuccess.message}
+        type="success"
+      />
+      <Snackbar
+        open={error}
+        onClose={() => setError(false)}
+        message="Error performing action - please try again"
+        type="error"
+      />
+    </Grid>
   );
 }

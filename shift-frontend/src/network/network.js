@@ -10,18 +10,11 @@ export const getCurrentShifts = async (token, month = false, week = false) => {
   let response;
   let url = "/api/shift/current";
 
-  if (month) {
-    url = "/api/shift/current?month=true";
-  }
-  // todo: make this work on backend
-  if (week) {
-    url = "/api/shift/current?week=true";
-  }
-
   try {
     response = await instance({
       method: "get",
       url: url,
+      timeout: 1000 * 5, // Wait for 5 seconds
       headers: {
         "X-Authorization": token,
       },
@@ -143,6 +136,38 @@ export const updateShift = async (token, shiftId, starttime, endtime) => {
   return response;
 };
 
+export const updateUserDetails = async (
+  userId,
+  token,
+  email = null,
+  currentPassword = null,
+  newPassword = null
+) => {
+  let response;
+  try {
+    response = await instance({
+      method: "patch",
+      url: `/api/user/update/${userId}`,
+      headers: {
+        "X-Authorization": token,
+      },
+      data: {
+        email,
+        currentPassword,
+        newPassword,
+      },
+    });
+    console.log(response);
+  } catch (error) {
+    if (!error.response) {
+      console.error(error);
+    } else {
+      console.error(error.response.data.message);
+    }
+  }
+  return response;
+};
+
 export const addShift = async (token, employeeId, starttime, endtime) => {
   let response;
   try {
@@ -182,11 +207,26 @@ export const login = async (email, password) => {
       },
     });
   } catch (error) {
-    if (!error.response) {
-      console.error(error);
+    if (error.response) {
+      // client received an error response (5xx, 4xx)
+      console.log(error.response);
+      return error.response;
+    } else if (error.request) {
+      // client never received a response, or request never left
+      console.log(error.request);
     } else {
-      console.error(error.response.data.message);
+      console.log(error);
+      // anything else
     }
+    // console.log("login: catch block running...");
+    // console.log("error object: ");
+    // if (!error.response) {
+    //   console.error(error);
+    //   return error;
+    // } else {
+    //   console.error(error.response.data.message);
+    //   return error;
+    // }
   }
   return response;
 };

@@ -1,22 +1,30 @@
-import React from "react";
-import authContext from "../context/authContext";
+import React, { useState, useEffect } from "react";
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link,
   Redirect,
-  useRouteMatch,
-  useParams,
 } from "react-router-dom";
 import View from "./View";
 import Manage from "./Manage";
+import Account from "./Account";
+import getUserData from "../utils/getUserData";
 import Menu from "../components/global/Menu";
 
 export default function Dashboard() {
-  const auth = React.useContext(authContext);
+  console.log("Dashboard - running...");
+  const [userData, setUserData] = useState(null);
 
-  console.log(auth);
+  useEffect(() => {
+    const userData = getUserData();
+    if (!userData) {
+      console.log("Dashboard: NOT LOGGED IN - REDIRECT");
+      window.location.replace(`http://${window.location.host}/login`);
+      return;
+    }
+
+    setUserData(userData);
+  }, []);
 
   const adminRoutes = (
     <Switch>
@@ -29,6 +37,9 @@ export default function Dashboard() {
       <Route path="/dashboard/manage">
         <Manage />
       </Route>
+      <Route path="/dashboard/account">
+        <Account />
+      </Route>
     </Switch>
   );
 
@@ -40,6 +51,9 @@ export default function Dashboard() {
       <Route path="/dashboard/view">
         <View />
       </Route>
+      <Route path="/dashboard/account">
+        <Account />
+      </Route>
     </Switch>
   );
 
@@ -47,7 +61,7 @@ export default function Dashboard() {
   return (
     <Router>
       <Menu />
-      <Switch>{auth.isAdmin ? adminRoutes : employeeRoutes}</Switch>
+      <Switch>{userData?.isAdmin ? adminRoutes : employeeRoutes}</Switch>
     </Router>
   );
 }

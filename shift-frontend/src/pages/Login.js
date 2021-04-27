@@ -4,6 +4,7 @@ import { makeStyles } from "@material-ui/core/styles";
 import { login } from "../network/index";
 import authContext from "../context/authContext";
 import { Redirect } from "react-router-dom";
+import Snackbar from "../components/global/Snackbar";
 
 const useStyles = makeStyles({
   root: {
@@ -25,6 +26,7 @@ const useStyles = makeStyles({
   },
   inputLabel: {
     color: "white",
+    backgroundColor: "#4a4e69",
   },
   buttonContainer: {
     display: "flex",
@@ -59,6 +61,10 @@ export default function Login() {
   const [passwordInputError, setPasswordInputError] = useState(false);
 
   const [loginError, setLoginError] = useState(false);
+  const [loginSuccessful, setLoginSuccessful] = useState(false);
+  const [generalError, setGeneralError] = useState(false);
+
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const [redirect, setRedirect] = useState(null);
 
@@ -78,39 +84,58 @@ export default function Login() {
   };
 
   const handleLogin = async () => {
+    setIsLoggingIn(true);
     // Reset error message states
     setEmailInputError(false);
     setPasswordInputError(false);
     setLoginError(false);
+    setLoginSuccessful(false);
+    setGeneralError(false);
 
     const emailValid = checkValidEmail(email);
     if (!emailValid) {
       setEmailInputError(true);
+      setIsLoggingIn(false);
       return;
     }
 
     const passwordValid = checkValidPassword(password);
     if (!passwordValid) {
       setPasswordInputError(true);
+      setIsLoggingIn(false);
       return;
     }
 
     if (emailInputError || passwordInputError) {
+      setIsLoggingIn(false);
       return;
     }
 
     const performLogin = await login(email, password);
+
+    console.log("Performing login, response returned: ");
+    console.log(performLogin);
+
     if (!performLogin) {
-      setLoginError(true);
+      console.log("Error - no response returned");
+      // setLoginError(true);
+      setGeneralError(true);
+      setIsLoggingIn(false);
       return;
     }
-    if (!performLogin.status === 201) {
+
+    if (performLogin.status === 401) {
       setLoginError(true);
+      setIsLoggingIn(false);
       return;
     }
+
+    setLoginSuccessful(true);
     const { data } = performLogin;
 
     setLoginToken(data.token, data.userId, data.name, data.email, data.admin);
+    setIsLoggingIn(false);
+
     setRedirect("/dashboard");
   };
 
@@ -185,6 +210,15 @@ export default function Login() {
             Login credentials incorrect - please try again
           </Typography>
         ) : null}
+        {loginSuccessful ? (
+          <Typography
+            style={{
+              color: "#4BB543",
+            }}
+          >
+            Login successful
+          </Typography>
+        ) : null}
         <Box className={classes.buttonContainer}>
           <Button
             variant="contained"
@@ -192,10 +226,16 @@ export default function Login() {
             className={classes.button}
             onClick={() => handleLogin()}
           >
-            Login
+            {isLoggingIn ? "Logging in..." : "Login"}
           </Button>
         </Box>
       </form>
+      <Snackbar
+        open={generalError}
+        onClose={() => setGeneralError(false)}
+        message="Oops, looks like something went wrong - please try again"
+        type="error"
+      />
     </Box>
   );
 }

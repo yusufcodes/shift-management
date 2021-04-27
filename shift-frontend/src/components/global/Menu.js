@@ -1,24 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { makeStyles } from "@material-ui/core/styles";
-import {
-  IconButton,
-  Button,
-  Grid,
-  TextField,
-  Typography,
-} from "@material-ui/core";
+import { IconButton, Button, Grid } from "@material-ui/core";
 import Drawer from "@material-ui/core/Drawer";
 import List from "@material-ui/core/List";
 import Divider from "@material-ui/core/Divider";
 import ListItem from "@material-ui/core/ListItem";
-import ListItemIcon from "@material-ui/core/ListItemIcon";
 import ListItemText from "@material-ui/core/ListItemText";
-import { Link } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import authContext from "../../context/authContext";
-
+import getUserData from "../../utils/getUserData";
 import MenuIcon from "@material-ui/icons/Menu";
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles(() => ({
   root: {
     backgroundColor: "#4a4e69",
     color: "#f2f2f2",
@@ -42,9 +35,23 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: "bold",
     fontSize: "21px",
   },
+  link: {
+    textDecoration: "none",
+    color: "black",
+    "&:hover": {
+      textDecoration: "underline",
+    },
+  },
 }));
 
 export default function Menu() {
+  const [userData, setUserData] = useState(null);
+
+  useEffect(() => {
+    const userData = getUserData();
+    setUserData(userData);
+  }, []);
+
   const auth = React.useContext(authContext);
 
   const classes = useStyles();
@@ -77,7 +84,7 @@ export default function Menu() {
     { label: "Account", route: "/dashboard/account" },
   ];
 
-  const selectedRoute = auth.isAdmin ? adminRoutes : employeeRoutes;
+  const selectedRoute = userData?.isAdmin ? adminRoutes : employeeRoutes;
 
   const list = (anchor) => (
     <>
@@ -90,19 +97,33 @@ export default function Menu() {
         onKeyDown={toggleDrawer(anchor, false)}
       >
         <List>
-          {selectedRoute.map((item, index) => (
-            <Link to={item.route}>
+          {selectedRoute?.map((item, index) => (
+            <NavLink
+              to={item.route}
+              key={index}
+              exact
+              className={classes.link}
+              activeStyle={{
+                textDecoration: "underline",
+              }}
+            >
               <ListItem button key={index}>
                 <ListItemText primary={item.label} />
               </ListItem>
-            </Link>
+            </NavLink>
           ))}
         </List>
         <Button
+          style={{
+            display: "flex",
+            width: "90%",
+            margin: "0 auto",
+          }}
           variant="contained"
+          color="primary"
           onClick={() => {
             auth.logout();
-            window.location.replace(`http://www.${window.location.host}/login`);
+            window.location.replace(`http://${window.location.host}/login`);
           }}
         >
           Logout
