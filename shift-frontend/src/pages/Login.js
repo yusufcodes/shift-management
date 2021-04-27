@@ -225,6 +225,7 @@ export default function Login() {
             color="primary"
             className={classes.button}
             onClick={() => handleLogin()}
+            disabled={!email || !password}
           >
             {isLoggingIn ? "Logging in..." : "Login"}
           </Button>
