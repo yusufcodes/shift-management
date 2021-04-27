@@ -8,7 +8,6 @@ import {
   Route,
   Redirect,
 } from "react-router-dom";
-import { setupWorker, rest } from "msw";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import authContext from "./context/authContext";
@@ -17,16 +16,6 @@ import authContext from "./context/authContext";
 Land on login: if not logged in
 Land on dashboard: once logged in
 */
-
-// if (process.env.NODE_ENV === "development") {
-//   const { handlers } = require("./handlers");
-//   const worker = setupWorker(
-//     rest.get("/greeting", (req, res, ctx) => {
-//       return res(ctx.status(200), ctx.json({ greeting: "hello there" }));
-//     })
-//   );
-//   worker.start();
-// }
 
 const DefaultTheme = createMuiTheme();
 let theme = {
