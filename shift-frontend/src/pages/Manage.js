@@ -347,7 +347,7 @@ export default function Manage() {
             }}
             inputProps={{
               name: "employee",
-              id: "age-select",
+              id: "employee-select",
             }}
           >
             <option aria-label="None" value="" />
@@ -418,7 +418,9 @@ export default function Manage() {
             InputLabelProps={{
               shrink: true,
             }}
-            onChange={(event) => setEndEdit(event.target.value)}
+            onChange={(event) => {
+              setEndEdit(event.target.value);
+            }}
           />
           <IconButton
             aria-label="delete"

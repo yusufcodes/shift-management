@@ -99,6 +99,7 @@ export default function Menu() {
         <List>
           {selectedRoute?.map((item, index) => (
             <NavLink
+              id={item.route}
               to={item.route}
               key={index}
               exact
@@ -138,6 +139,7 @@ export default function Menu() {
         <Grid container alignItems="center">
           <Grid item>
             <IconButton
+              id="menu-button"
               aria-label="menu"
               color="primary"
               classes={{

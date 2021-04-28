@@ -1,5 +1,4 @@
 /* eslint-disable no-undef */
-/// <reference types="cypress-downloadfile"/>
 describe("== View Page ==", () => {
   const email = "mark123@gmail.com";
   const password = "password1234";
