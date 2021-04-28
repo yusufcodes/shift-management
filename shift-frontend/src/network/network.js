@@ -2,7 +2,7 @@ const axios = require("axios");
 
 let instance = axios.create({
   baseURL: " http://localhost:5000",
-  timeout: 1000,
+  timeout: 5000,
   // headers: {'X-Custom-Header': 'foobar'}
 });
 
