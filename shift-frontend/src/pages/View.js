@@ -15,6 +15,7 @@ import {
   StyleSheet,
 } from "@react-pdf/renderer";
 import { Button, makeStyles, Typography } from "@material-ui/core";
+import Alert from "@material-ui/lab/Alert";
 import SaveIcon from "@material-ui/icons/Save";
 import Snackbar from "../components/global/Snackbar";
 import { Font } from "@react-pdf/renderer";
@@ -28,7 +29,7 @@ const locales = {
   "en-US": require("date-fns/locale/en-US"),
 };
 
-// Create styles for PDF VIEW
+// Styles for PDF (not page)
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
@@ -56,8 +57,15 @@ const styles = StyleSheet.create({
   },
 });
 
-export default function View({ testEvents = null }) {
-  const useStyles = makeStyles((theme) => ({
+/*
+Page: View
+Purpose:
+- Output shift schedule for the user currently logged in, into a calendar
+- Option to export the shifts to a PDF
+*/
+export default function View() {
+  // Page Styles
+  const useStyles = makeStyles(() => ({
     root: {
       width: "80%",
       margin: "0 auto",
@@ -73,22 +81,18 @@ export default function View({ testEvents = null }) {
 
   const classes = useStyles();
 
+  // Page state - used for conditional rendering of page content
   const [shifts, setShifts] = React.useState(null);
   const [shiftsPDF, setShiftsPDF] = React.useState(null);
   const [loggedInName, setLoggedInName] = React.useState("");
   const [error, setError] = React.useState(false);
 
   useEffect(() => {
-    // getShifts no longer called if in test mode
-    if (testEvents) {
-      setShifts(testEvents);
-      return;
-    }
     (async () => {
       // Check that the user is logged in
       const userData = getUserData();
-      console.log(userData);
       if (!userData) {
+        // Redirect user to login page if they are not logged in
         console.log("View: Not logged in");
         window.location.replace(`http://${window.location.host}/login`);
         return;
@@ -102,17 +106,19 @@ export default function View({ testEvents = null }) {
   }, []);
 
   const getShifts = async () => {
-    console.log("Running getShifts...");
-    // setError(false);
+    // Retrieve user data stored in local storage
     const userData = getUserData();
     if (!userData) {
-      console.error("NOT LOGGED IN?");
+      setError(true);
+      console.error("NOT LOGGED IN");
+      return;
     }
+
+    // Perform backend call passing in token
     const response = await getCurrentShifts(userData.token);
 
+    // Error handling
     if (!response) {
-      setError(true);
-      console.error("View.js: Error getting shifts - no response");
       return;
     }
     if (!response.status === 200) {
@@ -121,7 +127,7 @@ export default function View({ testEvents = null }) {
       return;
     }
 
-    // Transform to be used in events
+    // Transform shifts from backend to match the format for React Big Calendar
     const allEvents = response.data.userShifts.map((item) => {
       return {
         title: "Shift",
@@ -130,12 +136,10 @@ export default function View({ testEvents = null }) {
       };
     });
 
-    // Transform to be used in PDF export
+    // Transforming shifts from backend to be used in PDF generation
     const sortedShifts = new Map();
 
     response.data.userShifts.map((item) => {
-      // Setup new Map
-
       // Get current month
       const month = new Date(item.starttime).toLocaleString("default", {
         month: "long",
@@ -143,8 +147,10 @@ export default function View({ testEvents = null }) {
 
       // If the current month is NOT an entry
       if (!sortedShifts.get(month)) {
+        // Create new entry in the 'sortedShifts' for current month
         sortedShifts.set(month, [{ item }]);
       } else {
+        // Add a new entry to 'sortedShifts' for existing month
         const old = sortedShifts.get(month);
         sortedShifts.set(month, [...old, { item }]);
       }
@@ -152,10 +158,11 @@ export default function View({ testEvents = null }) {
       return sortedShifts;
     });
 
-    setShifts(allEvents);
-    setShiftsPDF(sortedShifts);
+    setShifts(allEvents); // Store shifts for React Big Calendar
+    setShiftsPDF(sortedShifts); // Store shifts for PDF generation
   };
 
+  // Calendar date initialisation
   const localizer = dateFnsLocalizer({
     format,
     parse,
@@ -176,14 +183,19 @@ export default function View({ testEvents = null }) {
     />
   );
 
+  // producePDF: Method to return components to build up PDF of shifts
   const producePDF = () => {
-    // Code
+    // Convert from Map to Array
     const arrayOfShifts = [...shiftsPDF];
 
+    // Iterate over 'arrayOfShifts' to generate PDF output
     const PDF = arrayOfShifts.map((item, index) => {
+      // Extract current month
       const monthHeading = item[0];
 
+      // Extract each shift linked to the current month in the iteration
       const monthShifts = item[1].map(({ item }, index) => {
+        // Extract starttime and endtime
         const { starttime, endtime } = item;
         const start = new Date(starttime);
         const end = new Date(endtime);
@@ -217,6 +229,7 @@ export default function View({ testEvents = null }) {
         <Page size="A4" style={styles.page}>
           <PDFView>
             <Text style={styles.heading}>{monthHeading}</Text>
+            {/* monthShifts: return the components generated for the current month being generated */}
             {monthShifts}
           </PDFView>
         </Page>
@@ -254,7 +267,19 @@ export default function View({ testEvents = null }) {
         /_/g,
         " "
       )}, here is your schedule`}</Typography>
-      {shifts && MyCalendar}
+      {shifts ? (
+        MyCalendar
+      ) : (
+        <Alert
+          severity="info"
+          style={{
+            margin: "20px 0",
+          }}
+        >
+          There are no schedule shifts for you at the moment, please check back
+          later.
+        </Alert>
+      )}
       <Snackbar
         open={error}
         onClose={() => setError(false)}
