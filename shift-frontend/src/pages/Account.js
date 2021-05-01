@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import {
-  Typography,
   TextField,
   Button,
   Box,
@@ -14,18 +13,19 @@ import getUserData from "../utils/getUserData";
 import { updateUserDetails } from "../network/network";
 import Snackbar from "../components/global/Snackbar";
 
+/* 
+Account page
+Allow for user to update their email and password
+*/
 export default function Account() {
+  // Page state
   const [openModal, setOpenModal] = useState(false);
-
   const [name, setName] = useState("Loading name...");
   const [email, setEmail] = useState("Loading email...");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [newPasswordConfirm, setNewPasswordConfirm] = useState("");
-  const [error, setError] = useState(false);
   const [passwordMatchError, setPasswordMatchError] = useState(false);
-  const [success, setSuccess] = useState(false);
-
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [openSnackbarError, setOpenSnackbarError] = useState(false);
   const [openSnackbarLoadingError, setOpenSnackbarLoadingError] = useState(
@@ -66,12 +66,15 @@ export default function Account() {
     setEmail(email);
   }, []);
 
+  // Perform email update
   const handleUpdateEmail = async () => {
     setOpenSnackbar(false);
     setOpenSnackbarError(false);
 
     const userData = getUserData();
     const { userId, token } = userData;
+
+    // Network connection
     const response = await updateUserDetails(userId, token, email);
     if (!response) {
       setOpenSnackbarError(true);
@@ -85,6 +88,7 @@ export default function Account() {
     setOpenSnackbar(true);
   };
 
+  // Perform password update
   const handleUpdatePassword = async () => {
     setOpenSnackbar(false);
     setOpenSnackbarError(false);
@@ -97,6 +101,8 @@ export default function Account() {
 
     const userData = getUserData();
     const { userId, token } = userData;
+
+    // Network connection
     const response = await updateUserDetails(
       userId,
       token,
@@ -231,9 +237,6 @@ export default function Account() {
           >
             Submit
           </Button>
-          {error && (
-            <Typography>Error updating details - please try again</Typography>
-          )}
         </Box>
       </form>
       {openSnackbar && (
