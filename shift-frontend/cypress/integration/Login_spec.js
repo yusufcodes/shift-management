@@ -43,7 +43,7 @@ describe("== Login Page ==", () => {
   });
 
   // Invalid password (less than 6 characters)
-  it("enter an invalid password and ???", () => {
+  it("enter an invalid password and output error message", () => {
     cy.get("#email").focus().type(email);
     cy.get("#password").focus().type("pass"); // invalid password
     cy.get("button").click();
@@ -51,5 +51,15 @@ describe("== Login Page ==", () => {
       "have.text",
       "Please enter a password with at least six characters"
     );
+  });
+
+  it("after logging in, perform logout and be redirected back to the login screen", () => {
+    cy.get("#email").focus().type(email);
+    cy.get("#password").focus().type(password);
+    cy.get("button").click();
+    // Open menu and press logout
+    cy.get("#menu-button").click();
+    cy.get("span").contains("Logout").click();
+    cy.get("h1").contains("Shift Management App");
   });
 });

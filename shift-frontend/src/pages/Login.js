@@ -20,13 +20,10 @@ const useStyles = makeStyles({
     padding: "70px",
   },
   inputRoot: {
-    color: "white",
+    color: "black",
     display: "flex",
     margin: "30px 0",
-  },
-  inputLabel: {
-    color: "white",
-    backgroundColor: "#4a4e69",
+    backgroundColor: "white",
   },
   buttonContainer: {
     display: "flex",
@@ -49,11 +46,14 @@ const useStyles = makeStyles({
     margin: "30px 0",
   },
 });
-
+/* Login
+Allow for user to sign into the app with credentials, leading into the main app
+*/
 export default function Login() {
   const auth = React.useContext(authContext);
   const { setLoginToken } = auth;
 
+  // Page state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -83,6 +83,7 @@ export default function Login() {
     return true;
   };
 
+  // Pass login details to the backend and perform sign in
   const handleLogin = async () => {
     setIsLoggingIn(true);
     // Reset error message states
@@ -111,10 +112,8 @@ export default function Login() {
       return;
     }
 
+    // Query backend with login method
     const performLogin = await login(email, password);
-
-    console.log("Performing login, response returned: ");
-    console.log(performLogin);
 
     if (!performLogin) {
       console.log("Error - no response returned");
@@ -136,6 +135,7 @@ export default function Login() {
     setLoginToken(data.token, data.userId, data.name, data.email, data.admin);
     setIsLoggingIn(false);
 
+    // Send the user to dashboard page
     setRedirect("/dashboard");
   };
 
