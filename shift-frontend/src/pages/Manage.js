@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import {
   getUsers,
@@ -32,7 +31,9 @@ import format from "date-fns/format";
 import parse from "date-fns/parse";
 import startOfWeek from "date-fns/startOfWeek";
 import getDay from "date-fns/getDay";
+import Alert from "@material-ui/lab/Alert";
 import Snackbar from "../components/global/Snackbar";
+
 const locales = {
   "en-US": require("date-fns/locale/en-US"),
 };
@@ -43,7 +44,7 @@ const useStyles = makeStyles((theme) => ({
     margin: "0 auto",
   },
   header: {
-    margin: "45px 0",
+    margin: "20px 0",
   },
 
   container: {
@@ -59,8 +60,13 @@ const useStyles = makeStyles((theme) => ({
     color: "red",
   },
 }));
-
+/* 
+Manage page
+Allow for an admin to: create, update & delete shifts
+Ability to view entire team's working shifts.
+*/
 export default function Manage() {
+  // Page state
   const [userData, setUserData] = useState(null);
   const [addSuccess, setAddSuccess] = useState({
     open: false,
@@ -76,6 +82,7 @@ export default function Manage() {
   });
   const [error, setError] = useState(false);
 
+  // Redirect user back to login if they are not logged in
   const checkLogin = () => {
     const userData = getUserData();
     if (!userData) {
@@ -138,7 +145,9 @@ export default function Manage() {
 
   const loadAllShifts = async () => {
     checkLogin();
+    // Retrieve all user shifts from backend
     const response = await getAllShifts(userData?.token);
+    // Error handling
     if (!response) {
       setError(true);
       return;
@@ -147,6 +156,7 @@ export default function Manage() {
       setError(true);
       return;
     }
+    // Restructure backend data to be implemented into the calendar
     const allEvents = response.data.allShifts.map((item) => {
       return {
         shiftId: item.id,
@@ -158,15 +168,11 @@ export default function Manage() {
     setAllShifts(allEvents);
   };
 
-  // Pass in Dates to be checked
+  // Input error handling on dates - when editing a shift.
   const checkDates = (start, end) => {
     setInputError(false);
     setTimeError(false);
     setDayError(false);
-
-    console.log("Dates being compared: ");
-    console.log(start);
-    console.log(end);
 
     // Invalid date state
     if (
@@ -208,17 +214,25 @@ export default function Manage() {
     return false;
   };
 
+  // Perform adding of a new shift - backend communication
   const handleAdd = async () => {
+    // Check user is logged in & reset state
     checkLogin();
     resetSnackbarStates();
+
+    // Create Date objects from start and end date selected by user
     const starttime = new Date(starttimeForm);
     const endtime = new Date(endtimeForm);
+
+    // Perform backend request to create shift
     const response = await addShift(
       userData?.token,
       selectedUser,
       starttime,
       endtime
     );
+
+    // Set error snackbar to visible if there are errors
     if (!response) {
       setError(true);
       return;
@@ -227,6 +241,8 @@ export default function Manage() {
       setError(true);
       return;
     }
+
+    // Close create dialog and reload all shifts, to output new shift
     setOpenAddCalendarDialog(false);
     loadAllShifts();
     setAddSuccess((prevState) => ({
@@ -235,6 +251,7 @@ export default function Manage() {
     }));
   };
 
+  // Perform editing of a shift - backend communication
   const handleEdit = async () => {
     checkLogin();
     resetSnackbarStates();
@@ -269,6 +286,7 @@ export default function Manage() {
     return true;
   };
 
+  // Perform deletion of a shift - backend communication
   const handleDelete = async () => {
     checkLogin();
     resetSnackbarStates();
@@ -554,6 +572,14 @@ export default function Manage() {
   return (
     <Grid className={classes.root}>
       <h1 className={classes.header}>Manage Shifts</h1>
+      <Alert
+        severity="info"
+        style={{
+          margin: "10px 0",
+        }}
+      >
+        Use the calendar interface below to add, edit or remove shifts.
+      </Alert>
       {allShifts && MyCalendar}
       {AddShiftCalendar}
       {EditShiftCalendar}
