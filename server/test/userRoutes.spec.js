@@ -20,8 +20,7 @@ describe("=== User Router Tests ===", () => {
   // Sign Up
   describe("ROUTE: /api/user/signup", () => {
     // success: create account with no issues
-    // TODO: change email to create a new  user when re-running test
-    it("[POST]: create a new user account and return the user details [* should fail right now]", (done, res) => {
+    it("[POST]: create a new user account and return the user details [* remove testuser from db if fails]", (done, res) => {
       const testEmail = "testuser@gmail.com";
 
       request(app)
@@ -29,8 +28,8 @@ describe("=== User Router Tests ===", () => {
         .set("Accept", "application/json")
         .send({
           name: "Test Person",
-          email: "testuser@gmail.com",
-          admin: false,
+          email: testEmail,
+          admin: true,
           password: "password123",
         })
         .expect("Content-Type", /json/)
@@ -65,7 +64,7 @@ describe("=== User Router Tests ===", () => {
         .post("/api/user/signup")
         .set("Accept", "application/json")
         .send({
-          email: "testuser@gmail.com",
+          email: testEmail,
           admin: false,
           password: "password123",
         })
@@ -82,7 +81,7 @@ describe("=== User Router Tests ===", () => {
         .set("Accept", "application/json")
         .send({
           name: "test name",
-          email: "testuser",
+          email: "testuser", // invalid email
           admin: false,
           password: "password123",
         })
@@ -182,39 +181,48 @@ describe("=== User Router Tests ===", () => {
   // Updating User Details
   describe("ROUTE: /api/user/update/:uid", () => {
     // Get and store token for protected routes
+    let testEmail = "testuser@gmail.com";
     let token;
+    let id;
+
     beforeEach((done) => {
       request(app)
         .post("/api/user/login")
         .send({
-          email: "testuser@gmail.com",
+          email: testEmail,
           password: "password123",
         })
         .end(function (err, res) {
           if (err) throw err;
           token = res.body.token;
+          id = res.body.userId;
           done();
         });
     });
 
     // success - update user email
-    it("[PATCH] - updates user email and returns a 201 [*should fail right now]", (done, res) => {
+    it("[PATCH] - updates user email and returns a 201 [* remove testuser-updated from db if fails]", (done, res) => {
       request(app)
-        .patch("/api/user/update/60862ac77c529b1fe7bc83c3")
+        .patch(`/api/user/update/${id}`)
         .send({
-          email: "testuser@gmail.com",
+          email: "testuser-updated@gmail.com",
         })
         .set("Accept", "application/json")
         .set("X-Authorization", token)
         .expect("Content-Type", /json/)
-        .expect(201, done);
+        .expect(201)
+        .end((err, res) => {
+          if (err) throw err;
+          testEmail = "testuser-updated@gmail.com";
+          done();
+        });
     });
     // success - update user password
     it("[PATCH] - updates user password and returns a 201", (done, res) => {
       request(app)
-        .patch("/api/user/update/60862ac77c529b1fe7bc83c3")
+        .patch(`/api/user/update/${id}`)
         .send({
-          email: "testuser123@gmail.com",
+          email: testEmail,
           password: "password123",
         })
         .set("Accept", "application/json")
@@ -225,7 +233,7 @@ describe("=== User Router Tests ===", () => {
     // update user: invalid email -> 422
     it("[PATCH] - return 422 error when updating details with an invalid email address", (done, res) => {
       request(app)
-        .patch("/api/user/update/60862ac77c529b1fe7bc83c3")
+        .patch(`/api/user/update/${id}`)
         .send({
           email: "invalidEmailHere",
         })
@@ -237,7 +245,7 @@ describe("=== User Router Tests ===", () => {
     // update user: no inputs -> 422
     it("[PATCH] - return 422 error when updating details without passing in required details (empty object sent)", (done, res) => {
       request(app)
-        .patch("/api/user/update/60862ac77c529b1fe7bc83c3")
+        .patch(`/api/user/update/${id}`)
         .send({})
         .set("Accept", "application/json")
         .set("X-Authorization", token)
