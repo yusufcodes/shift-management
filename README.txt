@@ -37,7 +37,7 @@ The application should automatically open up at http://localhost:3000/.
 To log in, the following credentials can be used:
 
 Email: mark123@gmail.com
-Password: password123
+Password: password1234
 
 To run the tests for the frontend, run: yarn run cypress open
 
