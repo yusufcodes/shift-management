@@ -3,10 +3,9 @@ const axios = require("axios");
 let instance = axios.create({
   baseURL: " http://localhost:5000",
   timeout: 5000,
-  // headers: {'X-Custom-Header': 'foobar'}
 });
 
-export const getCurrentShifts = async (token, month = false, week = false) => {
+export const getCurrentShifts = async (token) => {
   let response;
   let url = "/api/shift/current";
 
@@ -14,7 +13,6 @@ export const getCurrentShifts = async (token, month = false, week = false) => {
     response = await instance({
       method: "get",
       url: url,
-      timeout: 1000 * 5, // Wait for 5 seconds
       headers: {
         "X-Authorization": token,
       },
@@ -218,15 +216,36 @@ export const login = async (email, password) => {
       console.log(error);
       // anything else
     }
-    // console.log("login: catch block running...");
-    // console.log("error object: ");
-    // if (!error.response) {
-    //   console.error(error);
-    //   return error;
-    // } else {
-    //   console.error(error.response.data.message);
-    //   return error;
-    // }
+  }
+  return response;
+};
+
+export const signup = async (name, email, admin, password) => {
+  let response;
+
+  try {
+    response = await instance({
+      method: "post",
+      url: "/api/user/signup",
+      data: {
+        name,
+        email,
+        admin,
+        password,
+      },
+    });
+  } catch (error) {
+    if (error.response) {
+      // client received an error response (5xx, 4xx)
+      console.log(error.response);
+      return error.response;
+    } else if (error.request) {
+      // client never received a response, or request never left
+      console.log(error.request);
+    } else {
+      console.log(error);
+      // anything else
+    }
   }
   return response;
 };

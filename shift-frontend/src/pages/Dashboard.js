@@ -8,6 +8,7 @@ import {
 import View from "./View";
 import Manage from "./Manage";
 import Account from "./Account";
+import CreateAccount from "./CreateAccount";
 import getUserData from "../utils/getUserData";
 import Menu from "../components/global/Menu";
 
@@ -39,6 +40,9 @@ export default function Dashboard() {
       </Route>
       <Route path="/dashboard/account">
         <Account />
+      </Route>
+      <Route path="/dashboard/create-account">
+        <CreateAccount />
       </Route>
     </Switch>
   );

@@ -20,6 +20,7 @@ import {
   DialogTitle,
   makeStyles,
   IconButton,
+  CircularProgress,
 } from "@material-ui/core";
 import FormControl from "@material-ui/core/FormControl";
 import Select from "@material-ui/core/Select";
@@ -58,6 +59,9 @@ const useStyles = makeStyles((theme) => ({
   },
   error: {
     color: "red",
+  },
+  progress: {
+    textAlign: "center",
   },
 }));
 /* 
@@ -116,8 +120,14 @@ export default function Manage() {
 
   // Dialog state
   const [openAddCalendarDialog, setOpenAddCalendarDialog] = useState(false);
+  const [addIsLoading, setAddIsLoading] = useState(false);
+
   const [openEditCalendarDialog, setOpenEditCalendarDialog] = useState(false);
+  const [editIsLoading, setEditIsLoading] = useState(false);
+
   const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [deleteIsLoading, setDeleteIsLoading] = useState(false);
+
   const [editDialogName, setEditDialogName] = useState(null);
 
   const [dayError, setDayError] = useState(false);
@@ -216,6 +226,7 @@ export default function Manage() {
 
   // Perform adding of a new shift - backend communication
   const handleAdd = async () => {
+    setAddIsLoading(true);
     // Check user is logged in & reset state
     checkLogin();
     resetSnackbarStates();
@@ -235,14 +246,19 @@ export default function Manage() {
     // Set error snackbar to visible if there are errors
     if (!response) {
       setError(true);
+      setAddIsLoading(false);
+
       return;
     }
     if (response.status !== 201) {
       setError(true);
+      setAddIsLoading(false);
+
       return;
     }
 
     // Close create dialog and reload all shifts, to output new shift
+    setAddIsLoading(false);
     setOpenAddCalendarDialog(false);
     loadAllShifts();
     setAddSuccess((prevState) => ({
@@ -253,12 +269,14 @@ export default function Manage() {
 
   // Perform editing of a shift - backend communication
   const handleEdit = async () => {
+    setEditIsLoading(true);
     checkLogin();
     resetSnackbarStates();
     const starttime = new Date(startEdit);
     const endtime = new Date(endEdit);
     const errors = checkDates(starttime, endtime);
     if (errors) {
+      setEditIsLoading(false);
       return false;
     }
 
@@ -271,10 +289,14 @@ export default function Manage() {
     );
     if (!response) {
       setError(true);
+      setEditIsLoading(false);
+
       return;
     }
     if (response.status !== 200) {
       setError(true);
+      setEditIsLoading(false);
+
       return;
     }
 
@@ -283,20 +305,26 @@ export default function Manage() {
       ...prevState,
       open: true,
     }));
+    setEditIsLoading(false);
     return true;
   };
 
   // Perform deletion of a shift - backend communication
   const handleDelete = async () => {
+    setDeleteIsLoading(true);
     checkLogin();
     resetSnackbarStates();
     const response = await deleteShift(userData?.token, selectedShiftId);
     if (!response) {
       setError(true);
+      setDeleteIsLoading(false);
+
       return;
     }
     if (response.status !== 200) {
       setError(true);
+      setDeleteIsLoading(false);
+
       return;
     }
 
@@ -304,7 +332,7 @@ export default function Manage() {
       ...prevState,
       open: true,
     }));
-
+    setDeleteIsLoading(false);
     setOpenDeleteDialog(false);
     setOpenEditCalendarDialog(false);
 
@@ -352,53 +380,61 @@ export default function Manage() {
       <DialogTitle id="add-shift-title">{"Add Shift"}</DialogTitle>
 
       <DialogContent>
-        <DialogContentText>
-          Select an employee to create this new shift for:
-        </DialogContentText>
-        <FormControl>
-          <InputLabel htmlFor="employee-select">Employee</InputLabel>
-          <Select
-            native
-            value={selectedUser}
-            onChange={(event) => {
-              setSelectedUser(event.target.value);
-            }}
-            inputProps={{
-              name: "employee",
-              id: "employee-select",
-            }}
-          >
-            <option aria-label="None" value="" />
-            {allUsers}
-          </Select>
-        </FormControl>
-        {selectedUser ? (
+        {addIsLoading ? (
+          <div className={classes.progress}>
+            <CircularProgress />
+          </div>
+        ) : (
           <>
-            <p>Would you like to confirm this shift for this user?</p>
-            <p>{`${starttimeForm
-              .toLocaleTimeString()
-              .slice(0, 5)} - ${endtimeForm
-              .toLocaleTimeString()
-              .slice(0, 5)}`}</p>
-            <DialogActions>
-              <Button
-                onClick={() => setOpenAddCalendarDialog(false)}
-                color="primary"
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={async () => {
-                  await handleAdd();
+            <DialogContentText>
+              Select an employee to create this new shift for:
+            </DialogContentText>
+            <FormControl>
+              <InputLabel htmlFor="employee-select">Employee</InputLabel>
+              <Select
+                native
+                value={selectedUser}
+                onChange={(event) => {
+                  setSelectedUser(event.target.value);
                 }}
-                color="primary"
-                autoFocus
+                inputProps={{
+                  name: "employee",
+                  id: "employee-select",
+                }}
               >
-                OK
-              </Button>
-            </DialogActions>
+                <option aria-label="None" value="" />
+                {allUsers}
+              </Select>
+            </FormControl>
+            {selectedUser ? (
+              <>
+                <p>Would you like to confirm this shift for this user?</p>
+                <p>{`${starttimeForm
+                  .toLocaleTimeString()
+                  .slice(0, 5)} - ${endtimeForm
+                  .toLocaleTimeString()
+                  .slice(0, 5)}`}</p>
+                <DialogActions>
+                  <Button
+                    onClick={() => setOpenAddCalendarDialog(false)}
+                    color="primary"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={async () => {
+                      await handleAdd();
+                    }}
+                    color="primary"
+                    autoFocus
+                  >
+                    OK
+                  </Button>
+                </DialogActions>
+              </>
+            ) : null}
           </>
-        ) : null}
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -412,85 +448,90 @@ export default function Manage() {
     >
       <DialogTitle id="edit-shift-title">{`Edit Shift - ${editDialogName}`}</DialogTitle>
       <DialogContent>
-        {/* Date Time Picker */}
-        <form className={classes.container} noValidate>
-          <TextField
-            required
-            id="datetime-start"
-            label="Start Time"
-            type="datetime-local"
-            defaultValue={startEdit}
-            className={classes.textField}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            onChange={(event) => setStartEdit(event.target.value)}
-          />
-          <TextField
-            required
-            id="datetime-end"
-            label="End Time"
-            type="datetime-local"
-            defaultValue={endEdit}
-            className={classes.textField}
-            InputLabelProps={{
-              shrink: true,
-            }}
-            onChange={(event) => {
-              setEndEdit(event.target.value);
-            }}
-          />
-          <IconButton
-            aria-label="delete"
-            color="primary"
-            classes={{
-              colorPrimary: classes.iconColor,
-            }}
-            onClick={() => setOpenDeleteDialog(true)}
-          >
-            <DeleteIcon />
-          </IconButton>
-          {timeError && (
-            <Typography className={classes.error}>
-              Shift start time must be smaller than the end time
-            </Typography>
-          )}
-          {dayError && (
-            <Typography className={classes.error}>
-              Shift must start and end on the same day
-            </Typography>
-          )}
-          {inputError && (
-            <Typography className={classes.error}>
-              Invalid date(s) entered, please try again
-            </Typography>
-          )}
-          {lengthError && (
-            <Typography className={classes.error}>
-              Shift should not exceed 10 hours
-            </Typography>
-          )}
-          <DialogActions>
-            <Button
-              onClick={() => setOpenEditCalendarDialog(false)}
-              color="primary"
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={async () => {
-                const performEdit = await handleEdit();
-                if (performEdit) {
-                  setOpenEditCalendarDialog(false);
-                }
+        {editIsLoading ? (
+          <div className={classes.progress}>
+            <CircularProgress />
+          </div>
+        ) : (
+          <form className={classes.container} noValidate>
+            <TextField
+              required
+              id="datetime-start"
+              label="Start Time"
+              type="datetime-local"
+              defaultValue={startEdit}
+              className={classes.textField}
+              InputLabelProps={{
+                shrink: true,
               }}
+              onChange={(event) => setStartEdit(event.target.value)}
+            />
+            <TextField
+              required
+              id="datetime-end"
+              label="End Time"
+              type="datetime-local"
+              defaultValue={endEdit}
+              className={classes.textField}
+              InputLabelProps={{
+                shrink: true,
+              }}
+              onChange={(event) => {
+                setEndEdit(event.target.value);
+              }}
+            />
+            <IconButton
+              aria-label="delete"
               color="primary"
-              autoFocus
+              classes={{
+                colorPrimary: classes.iconColor,
+              }}
+              onClick={() => setOpenDeleteDialog(true)}
             >
-              OK
-            </Button>
-          </DialogActions>
-        </form>
+              <DeleteIcon />
+            </IconButton>
+            {timeError && (
+              <Typography className={classes.error}>
+                Shift start time must be smaller than the end time
+              </Typography>
+            )}
+            {dayError && (
+              <Typography className={classes.error}>
+                Shift must start and end on the same day
+              </Typography>
+            )}
+            {inputError && (
+              <Typography className={classes.error}>
+                Invalid date(s) entered, please try again
+              </Typography>
+            )}
+            {lengthError && (
+              <Typography className={classes.error}>
+                Shift should not exceed 10 hours
+              </Typography>
+            )}
+            <DialogActions>
+              <Button
+                onClick={() => setOpenEditCalendarDialog(false)}
+                color="primary"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  const performEdit = await handleEdit();
+                  if (performEdit) {
+                    setOpenEditCalendarDialog(false);
+                  }
+                }}
+                color="primary"
+                autoFocus
+              >
+                OK
+              </Button>
+            </DialogActions>
+          </form>
+        )}
       </DialogContent>
     </Dialog>
   );
@@ -507,25 +548,36 @@ export default function Manage() {
         <DialogTitle id="delete-shift-title">
           {"Delete this shift?"}
         </DialogTitle>
-        <DialogContent>
-          <DialogContentText id="delete-shift-description">
-            Are you sure you want to delete this shift?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDeleteDialog(false)} color="primary">
-            Cancel
-          </Button>
-          <Button
-            onClick={async () => {
-              await handleDelete();
-            }}
-            color="primary"
-            autoFocus
-          >
-            OK
-          </Button>
-        </DialogActions>
+        {deleteIsLoading ? (
+          <div className={classes.progress}>
+            <CircularProgress />
+          </div>
+        ) : (
+          <>
+            <DialogContent>
+              <DialogContentText id="delete-shift-description">
+                Are you sure you want to delete this shift?
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => setOpenDeleteDialog(false)}
+                color="primary"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={async () => {
+                  await handleDelete();
+                }}
+                color="primary"
+                autoFocus
+              >
+                OK
+              </Button>
+            </DialogActions>
+          </>
+        )}
       </Dialog>
     </>
   );

@@ -4,6 +4,7 @@ describe("== View Page ==", () => {
   const password = "password1234";
 
   describe("Press Export Shifts to download PDF of shifts", () => {
+    // Perform PDF download first, before checking for its existence
     before(() => {
       cy.visit("http://localhost:3000/");
       cy.get("#email").focus().type(email);
@@ -12,6 +13,7 @@ describe("== View Page ==", () => {
       cy.get("a").contains("Export Shifts").click();
     });
 
+    // Check that PDF exists
     it('check that pdf successfully downloaded and one of the pages has "February" ', () => {
       cy.task("readPdf", "./cypress/downloads/Mark_Bloomfield_Shifts.pdf").then(
         ({ text }) => {
