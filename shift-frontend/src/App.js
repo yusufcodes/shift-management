@@ -23,27 +23,16 @@ let theme = {
 };
 theme = responsiveFontSizes(theme);
 
+/* App - entry point for the application, setting up the following:
+- Storing user data in local storage upon successful login
+- Handle logout method: clearing localStorage
+- Setting up initial Login and Dashboard routes
+*/
 function App() {
   const [token, setToken] = useState(null);
   const [admin, setAdmin] = useState(null);
   const [email, setEmail] = useState(null);
   const [name, setName] = useState(null);
-
-  const setUserDetails = (admin, name, email) => {
-    setAdmin(admin);
-    setName(name);
-    setEmail(email);
-
-    const originalData = JSON.parse(localStorage.getItem("userData"));
-    const newData = {
-      ...originalData,
-      isAdmin: admin,
-      name,
-      email,
-    };
-
-    localStorage.setItem("userData", JSON.stringify(newData));
-  };
 
   const logout = useCallback(() => {
     setToken(null);
@@ -64,8 +53,6 @@ function App() {
   useEffect(() => {
     console.log("App.js - running...");
     const data = JSON.parse(localStorage.getItem("userData"));
-    console.log("App.js: got data");
-    console.log(data);
     const { userId, token, name, email, isAdmin } = data || {};
     if (data && token) {
       setLoginToken(token, userId, name, email, isAdmin);
@@ -84,7 +71,6 @@ function App() {
           email: email,
           setLoginToken: setLoginToken,
           logout: logout,
-          setUserDetails: setUserDetails,
         }}
       >
         <ThemeProvider theme={theme}>

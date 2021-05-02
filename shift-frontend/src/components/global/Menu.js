@@ -6,7 +6,7 @@ import List from "@material-ui/core/List";
 import Divider from "@material-ui/core/Divider";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import authContext from "../../context/authContext";
 import getUserData from "../../utils/getUserData";
 import MenuIcon from "@material-ui/icons/Menu";
@@ -77,6 +77,7 @@ export default function Menu() {
     { label: "View", route: "/dashboard/view" },
     { label: "Manage", route: "/dashboard/manage" },
     { label: "Account", route: "/dashboard/account" },
+    { label: "Create Account", route: "/dashboard/create-account" },
   ];
 
   const employeeRoutes = [
@@ -99,6 +100,7 @@ export default function Menu() {
         <List>
           {selectedRoute?.map((item, index) => (
             <NavLink
+              id={item.route}
               to={item.route}
               key={index}
               exact
@@ -138,6 +140,7 @@ export default function Menu() {
         <Grid container alignItems="center">
           <Grid item>
             <IconButton
+              id="menu-button"
               aria-label="menu"
               color="primary"
               classes={{

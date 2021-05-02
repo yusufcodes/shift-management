@@ -86,7 +86,6 @@ const signup = async (req, res, next) => {
     return next(error);
   }
 
-  // TODO: Store password securely - encrypted
   const newUser = new User({
     name,
     email,
@@ -106,7 +105,14 @@ const signup = async (req, res, next) => {
   // Create a new token
   token = generateToken(newUser.id, newUser.name, newUser.email, newUser.admin);
 
-  res.status(201).json({ userId: newUser.id, email: newUser.email, token });
+  res
+    .status(201)
+    .json({
+      userId: newUser.id,
+      email: newUser.email,
+      isAdmin: newUser.admin,
+      token,
+    });
 };
 
 // POST: Use login details to sign user into account
