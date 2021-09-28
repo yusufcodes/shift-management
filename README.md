@@ -9,8 +9,6 @@ The purpose of this project was to replace an Excel-based system at my old workp
 
 Please note that this is **not** an open project, so there is no sign up process. Please contact me for account details if you intend to make use of this app for experimentation.
 
-
-
 ## About
 
 This web application is for anyone who wants to manage the working schedules of their teams. 
@@ -24,10 +22,9 @@ Employees can:
 Managers can do the same, but with the following extras:
 - Adding, editing or deleting shifts for any employee
 
-
 ## Installation
 
-This project has two installation sections, for the frontend (React) and Backend (Node)
+This project has two installation sections, for the Frontend (React) and Backend (Node)
 
 ### Front End
 
@@ -39,7 +36,6 @@ Navigate to the **shift-frontend** folder and execute the following commands:
 ```
 
 The application should automatically open up at http://localhost:3000/.
-
 
 ### Back End
 
@@ -70,13 +66,11 @@ If an instance of the server is already running in another terminal, kill this p
   yarn test
 ```
 
-
-
 ## Tech Stack
 JavaScript using the following:
 
-**Client:** React
+**Client:** React, Cypress for Integration Testing
 
-**Server:** MongoDB, Express, Node
+**Server:** MongoDB, Express, Node, Mocha & Chai for Unit Testing
 
   
